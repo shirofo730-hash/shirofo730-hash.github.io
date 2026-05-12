@@ -30,7 +30,7 @@
 
     body {
       --top-area-height: 40dvh;
-      --bottom-chrome-height: 168px;
+      --bottom-chrome-height: 112px;
       --board-size: min(492px, calc(100vw - 28px), calc(100dvh - var(--top-area-height) - var(--bottom-chrome-height)));
       margin: 0;
       width: 100vw;
@@ -47,8 +47,7 @@
     }
 
     body[data-pulse="1"] #char-container {
-      transform: translateY(-14px) scale(1.5375);
-      filter: saturate(1.08) brightness(1.08);
+      animation: char-beat-bounce 180ms cubic-bezier(0.2, 0.82, 0.26, 1) both;
     }
 
     body[data-pulse="1"] #sound-wave .wave-row {
@@ -123,7 +122,7 @@
         linear-gradient(90deg, transparent 0 48%, rgba(0, 242, 255, 0.1) 49%, transparent 51%),
         repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 18px);
       opacity: 0.45;
-      pointer-events: none;
+      pointer-events: auto;
       z-index: -2;
     }
 
@@ -235,8 +234,10 @@
       max-height: 100%;
       display: grid;
       place-items: end center;
-      transform: translateY(0) scale(1.5);
-      transition: transform 105ms ease-out, filter 105ms ease-out;
+      transform: translate3d(0, 26px, 0) scale(1.5);
+      transform-origin: center bottom;
+      backface-visibility: hidden;
+      will-change: transform;
     }
 
     #char-img {
@@ -244,6 +245,7 @@
       max-height: min(37dvh, 380px);
       object-fit: contain;
       object-position: center bottom;
+      transform: translateZ(0);
       filter:
         drop-shadow(0 0 9px rgba(255, 77, 184, 0.34))
         drop-shadow(0 0 18px var(--accent-soft));
@@ -545,6 +547,135 @@
       color: #fff;
     }
 
+    .start-gate {
+      position: fixed;
+      inset: 0;
+      z-index: 900;
+      display: grid;
+      place-items: center;
+      background:
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 5px),
+        radial-gradient(circle at center, rgba(0, 242, 255, 0.12), transparent 34%),
+        rgba(0, 0, 0, 0.82);
+      color: var(--accent);
+      overflow: hidden;
+      opacity: 1;
+      visibility: visible;
+      pointer-events: none;
+      transition: opacity 260ms ease, visibility 260ms ease;
+    }
+
+    .start-gate.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .start-button {
+      position: relative;
+      z-index: 2;
+      min-width: min(420px, 78vw);
+      min-height: 150px;
+      border: 1px solid rgba(0, 242, 255, 0.42);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.32);
+      color: var(--accent);
+      display: grid;
+      place-items: center;
+      pointer-events: auto;
+      box-shadow: 0 0 44px rgba(0, 242, 255, 0.16), inset 0 0 24px rgba(255, 77, 184, 0.08);
+      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+    }
+
+    .start-button:hover,
+    .start-button:focus-visible {
+      border-color: var(--accent);
+      background: rgba(0, 242, 255, 0.08);
+      outline: none;
+      transform: translateY(-2px);
+    }
+
+    .start-button:active {
+      transform: translateY(1px) scale(0.99);
+    }
+
+    .start-button:disabled {
+      cursor: default;
+      transform: none;
+    }
+
+    .start-gate.counting .start-button {
+      min-width: 0;
+      min-height: 0;
+      border-color: transparent;
+      background: transparent;
+      box-shadow: none;
+      padding: 0;
+    }
+
+    .start-gate::before,
+    .start-gate::after {
+      content: "";
+      position: absolute;
+      inset: -20%;
+      pointer-events: none;
+    }
+
+    .start-gate::before {
+      background:
+        repeating-linear-gradient(90deg, transparent 0 14px, rgba(0, 242, 255, 0.08) 14px 16px, transparent 16px 30px),
+        repeating-linear-gradient(0deg, transparent 0 18px, rgba(255, 77, 184, 0.08) 18px 20px, transparent 20px 36px);
+      opacity: 0.54;
+      animation: glitch-noise 240ms steps(2, end) infinite;
+    }
+
+    .start-gate::after {
+      background: radial-gradient(circle at center, transparent 0 28%, rgba(0, 0, 0, 0.42) 70%);
+    }
+
+    .glitch-text {
+      position: relative;
+      z-index: 1;
+      color: var(--accent);
+      font-size: clamp(54px, 15vw, 132px);
+      font-weight: 700;
+      line-height: 0.9;
+      text-transform: uppercase;
+      text-shadow:
+        2px 0 rgba(255, 77, 184, 0.75),
+        -2px 0 rgba(0, 242, 255, 0.75),
+        0 0 30px var(--accent-soft);
+      font-variant-numeric: tabular-nums;
+      animation: glitch-main 620ms steps(2, end) infinite;
+    }
+
+    .glitch-text::before,
+    .glitch-text::after {
+      content: attr(data-text);
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.82;
+    }
+
+    .glitch-text::before {
+      color: #ff4db8;
+      transform: translate(-4px, -2px);
+      clip-path: inset(0 0 54% 0);
+      animation: glitch-slice-a 420ms steps(2, end) infinite;
+    }
+
+    .glitch-text::after {
+      color: #00f2ff;
+      transform: translate(4px, 2px);
+      clip-path: inset(48% 0 0 0);
+      animation: glitch-slice-b 500ms steps(2, end) infinite;
+    }
+
+    .glitch-text.burst {
+      animation: glitch-burst 210ms steps(2, end), glitch-main 620ms steps(2, end) infinite;
+    }
+
     #modal-overlay {
       position: fixed;
       inset: 0;
@@ -635,9 +766,45 @@
       100% { opacity: 0; transform: translate(-50%, -20px) scale(0.98); }
     }
 
+    @keyframes char-beat-bounce {
+      0% { transform: translate3d(0, 26px, 0) scale(1.5); }
+      42% { transform: translate3d(0, 16px, 0) scale(1.515); }
+      100% { transform: translate3d(0, 26px, 0) scale(1.5); }
+    }
+
     @keyframes wave-scroll {
       0% { background-position: 0 0, 0 0; }
       100% { background-position: 132px 0, 0 0; }
+    }
+
+    @keyframes glitch-noise {
+      0% { transform: translate3d(-2%, -1%, 0); opacity: 0.38; }
+      50% { transform: translate3d(2%, 1%, 0); opacity: 0.66; }
+      100% { transform: translate3d(-1%, 2%, 0); opacity: 0.48; }
+    }
+
+    @keyframes glitch-main {
+      0%, 100% { transform: translate3d(0, 0, 0); }
+      20% { transform: translate3d(-2px, 1px, 0); }
+      40% { transform: translate3d(2px, -1px, 0); }
+      60% { transform: translate3d(-1px, -1px, 0); }
+      80% { transform: translate3d(1px, 1px, 0); }
+    }
+
+    @keyframes glitch-slice-a {
+      0%, 100% { clip-path: inset(0 0 58% 0); }
+      50% { clip-path: inset(18% 0 36% 0); }
+    }
+
+    @keyframes glitch-slice-b {
+      0%, 100% { clip-path: inset(46% 0 0 0); }
+      50% { clip-path: inset(66% 0 8% 0); }
+    }
+
+    @keyframes glitch-burst {
+      0% { transform: translate3d(0, 0, 0) scale(0.94); filter: brightness(1); }
+      45% { transform: translate3d(8px, -3px, 0) scale(1.08); filter: brightness(1.45); }
+      100% { transform: translate3d(0, 0, 0) scale(1); filter: brightness(1); }
     }
 
     @media (max-height: 720px) {
@@ -675,6 +842,11 @@
 </head>
 <body data-phase="standby" data-evolution="0" data-pulse="0">
   <button id="settings-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
+  <div class="start-gate" id="start-gate">
+    <button class="start-button" id="start-btn" type="button" aria-label="Start">
+      <span class="glitch-text" id="start-text" data-text="START">START</span>
+    </button>
+  </div>
 
   <section id="top-area" aria-label="Character sync stage">
     <div id="status-overlay" aria-live="polite">
@@ -717,10 +889,6 @@
 
     <div id="grid"></div>
     <div id="feedback"></div>
-
-    <div class="actions">
-      <button class="primary" id="start-btn" type="button">INITIALIZE</button>
-    </div>
   </section>
 
   <div id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-title">
@@ -764,8 +932,10 @@
     const SCORE_BPM_THRESHOLD = 10000;
     const SCORE_BPM_INCREMENT = 20;
     const CHARACTER_SWAP_SCORE = 20000;
+    const CHARACTER_FINAL_SWAP_SCORE = 30000;
     const CHARACTER_BASE_SRC = "assets/chara1.png";
     const CHARACTER_SCORE_SRC = "assets/chara1v2.png";
+    const CHARACTER_FINAL_SRC = "assets/chara1-score30000.png";
     const TARGETS = [3, 4, 5, 6];
     const COLORS = [
       { id: "red", value: "#ff4d6d" },
@@ -790,7 +960,9 @@
     const grid = document.getElementById("grid");
     const charContainer = document.getElementById("char-container");
     const charImg = document.getElementById("char-img");
+    const startGate = document.getElementById("start-gate");
     const startBtn = document.getElementById("start-btn");
+    const startText = document.getElementById("start-text");
     const resetBtn = document.getElementById("reset-btn");
     const settingsBtn = document.getElementById("settings-btn");
     const modal = document.getElementById("modal-overlay");
@@ -823,6 +995,7 @@
     let sync = 0;
     let evolution = 0;
     let audioContext = null;
+    let startSequenceActive = false;
 
     function randomItem(items) {
       return items[Math.floor(Math.random() * items.length)];
@@ -974,18 +1147,61 @@
       }
     }
 
-    function startGame() {
+    function setStartText(text) {
+      startText.textContent = text;
+      startText.dataset.text = text;
+      startText.classList.remove("burst");
+      void startText.offsetWidth;
+      startText.classList.add("burst");
+    }
+
+    function primeAudio() {
       if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
       }
       audioContext.resume();
+    }
+
+    function beginStartSequence() {
+      if (gameActive || startSequenceActive) return;
+
+      const sequence = ["3", "2", "1", "RE:CODE"];
+      let index = 0;
+
+      startSequenceActive = true;
+      startBtn.disabled = true;
+      startGate.classList.add("counting");
+      primeAudio();
+
+      function step() {
+        setStartText(sequence[index]);
+        index += 1;
+
+        if (index < sequence.length) {
+          window.setTimeout(step, 720);
+          return;
+        }
+
+        window.setTimeout(() => {
+          startGate.classList.add("hidden");
+          startGate.classList.remove("counting");
+          startBtn.disabled = false;
+          startSequenceActive = false;
+          startGame();
+        }, 720);
+      }
+
+      step();
+    }
+
+    function startGame() {
+      primeAudio();
 
       gameActive = true;
       resolving = false;
       startedAt = performance.now();
       lastBeat = -1;
       lastCycle = -1;
-      startBtn.textContent = "RESTART";
       setPhase("analyze");
       createGrid();
       cancelAnimationFrame(frameId);
@@ -1009,7 +1225,10 @@
       document.body.dataset.evolution = "0";
       setBpm(BPM_MIN);
       setPhase("standby");
-      startBtn.textContent = "INITIALIZE";
+      startSequenceActive = false;
+      setStartText("START");
+      startBtn.disabled = false;
+      startGate.classList.remove("hidden", "counting");
       createGrid();
       updateStats();
       showFeedback("RESET", "great");
@@ -1073,7 +1292,7 @@
       document.body.dataset.pulse = "1";
       window.setTimeout(() => {
         document.body.dataset.pulse = "0";
-      }, 110);
+      }, 180);
 
       charContainer.style.setProperty("--beat", beatInCycle + 1);
       playBeat(beatInCycle === 0 || beatInCycle === 4);
@@ -1108,7 +1327,14 @@
     }
 
     function updateCharacterImage() {
-      const nextSrc = score >= CHARACTER_SWAP_SCORE ? CHARACTER_SCORE_SRC : CHARACTER_BASE_SRC;
+      let nextSrc = CHARACTER_BASE_SRC;
+
+      if (score >= CHARACTER_FINAL_SWAP_SCORE) {
+        nextSrc = CHARACTER_FINAL_SRC;
+      } else if (score >= CHARACTER_SWAP_SCORE) {
+        nextSrc = CHARACTER_SCORE_SRC;
+      }
+
       if (charImg.getAttribute("src") !== nextSrc) {
         charImg.src = nextSrc;
       }
@@ -1164,7 +1390,7 @@
       }
     });
     bpmSlider.addEventListener("input", (event) => setBpm(event.target.value));
-    startBtn.addEventListener("click", startGame);
+    startBtn.addEventListener("click", beginStartSequence);
     resetBtn.addEventListener("click", () => {
       resetGame();
       closeSettingsModal();
