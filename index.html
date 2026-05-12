@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>RE:CORD - Sync Prototype</title>
+  <style>
+    :root {
+      --accent: #00f2ff;
+      --accent-soft: rgba(0, 242, 255, 0.24);
+      --danger: #ff4d6d;
+      --ok: #58ff9a;
+      --gold: #ffe066;
+      --bg: #0b0b0d;
+      --bg2: #151419;
+      --ink: #f8f7f2;
+      --muted: #9da1a6;
+      --line: rgba(255, 255, 255, 0.16);
+      --panel: rgba(255, 255, 255, 0.055);
+      color-scheme: dark;
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      letter-spacing: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      --top-area-height: 40dvh;
+      --bottom-chrome-height: 168px;
+      --board-size: min(492px, calc(100vw - 28px), calc(100dvh - var(--top-area-height) - var(--bottom-chrome-height)));
+      margin: 0;
+      width: 100vw;
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 14%, rgba(113, 32, 82, 0.3), transparent 34%),
+        linear-gradient(180deg, #060608 0%, var(--bg) 47%, #000 100%);
+      color: var(--ink);
+      position: relative;
+      display: grid;
+      grid-template-rows: var(--top-area-height) 1fr;
+    }
+
+    body[data-pulse="1"] #char-container {
+      transform: translateY(-14px) scale(1.5375);
+      filter: saturate(1.08) brightness(1.08);
+    }
+
+    body[data-pulse="1"] #sound-wave .wave-row {
+      opacity: calc(var(--o) + 0.34);
+      transform: translate(-50%, -50%) scaleY(1.18);
+    }
+
+    body[data-pulse="1"] #analyze-target strong {
+      transform: translateY(-18px) scale(1.04);
+    }
+
+    body[data-phase="execute"] {
+      background:
+        radial-gradient(circle at 50% 16%, rgba(0, 242, 255, 0.2), transparent 34%),
+        linear-gradient(180deg, #08090d 0%, #10151a 47%, #000 100%);
+    }
+
+    body[data-evolution="1"] { --accent: #ff4db8; --accent-soft: rgba(255, 77, 184, 0.24); }
+    body[data-evolution="2"] { --accent: #58ff9a; --accent-soft: rgba(88, 255, 154, 0.22); }
+    body[data-evolution="3"] { --accent: #ffe066; --accent-soft: rgba(255, 224, 102, 0.2); }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    #settings-btn {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      right: max(14px, env(safe-area-inset-right));
+      z-index: 20;
+      width: 42px;
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.36);
+      color: var(--ink);
+      font-size: 22px;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      transition: border-color 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    #settings-btn:hover,
+    #settings-btn:focus-visible {
+      border-color: var(--accent);
+      color: var(--accent);
+      outline: none;
+      transform: rotate(18deg);
+    }
+
+    #top-area {
+      position: relative;
+      min-width: 0;
+      overflow: hidden;
+      display: grid;
+      place-items: end center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      isolation: isolate;
+    }
+
+    #top-area::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, transparent 0 48%, rgba(0, 242, 255, 0.1) 49%, transparent 51%),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 18px);
+      opacity: 0.45;
+      pointer-events: none;
+      z-index: -2;
+    }
+
+    #top-area::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 38%;
+      background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.82));
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    #status-overlay {
+      position: absolute;
+      top: clamp(20px, 4vh, 42px);
+      left: 50%;
+      z-index: 3;
+      width: min(360px, calc(100vw - 76px));
+      transform: translateX(-50%);
+      display: grid;
+      gap: 9px;
+      justify-items: center;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    #phase-text {
+      min-height: 16px;
+      color: rgba(248, 247, 242, 0.82);
+      font-size: 12px;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    #metronome {
+      width: min(240px, 64vw);
+      height: 5px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    #metronome-bar {
+      width: var(--meter, 0%);
+      height: 100%;
+      border-radius: inherit;
+      background: var(--accent);
+      box-shadow: 0 0 18px var(--accent);
+    }
+
+    #sound-wave {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+      opacity: 0.78;
+      mix-blend-mode: screen;
+    }
+
+    #sound-wave::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 54%;
+      width: min(82vw, 620px);
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0, 242, 255, 0.36), rgba(255, 77, 184, 0.28), transparent);
+      box-shadow: 0 0 24px var(--accent-soft);
+      transform: translate(-50%, -50%);
+    }
+
+    .wave-row {
+      position: absolute;
+      left: 50%;
+      top: calc(54% + var(--y));
+      width: min(90vw, 720px);
+      height: var(--h);
+      background:
+        repeating-linear-gradient(
+          90deg,
+          transparent 0 8px,
+          rgba(0, 242, 255, 0.16) 8px 11px,
+          rgba(255, 77, 184, 0.12) 11px 13px,
+          transparent 13px 22px
+        ),
+        linear-gradient(90deg, transparent, rgba(0, 242, 255, 0.36), rgba(255, 77, 184, 0.18), transparent);
+      filter: blur(var(--blur));
+      opacity: var(--o);
+      transform: translate(-50%, -50%) scaleY(0.52);
+      transform-origin: center;
+      transition: opacity 110ms ease-out, transform 110ms ease-out;
+      animation: wave-scroll var(--speed) linear infinite;
+      mask-image: radial-gradient(ellipse at center, #000 0 48%, transparent 74%);
+    }
+
+    .wave-row:nth-child(1) { --y: -78px; --h: 52px; --o: 0.18; --blur: 0.2px; --speed: 3.8s; }
+    .wave-row:nth-child(2) { --y: -38px; --h: 68px; --o: 0.3; --blur: 0; --speed: 3.1s; }
+    .wave-row:nth-child(3) { --y: 0px; --h: 88px; --o: 0.42; --blur: 0; --speed: 2.6s; }
+    .wave-row:nth-child(4) { --y: 42px; --h: 66px; --o: 0.28; --blur: 0.2px; --speed: 3.3s; }
+    .wave-row:nth-child(5) { --y: 82px; --h: 48px; --o: 0.16; --blur: 0.4px; --speed: 4.2s; }
+
+    #char-container {
+      position: relative;
+      z-index: 0;
+      width: min(66vw, 360px);
+      max-height: 100%;
+      display: grid;
+      place-items: end center;
+      transform: translateY(0) scale(1.5);
+      transition: transform 105ms ease-out, filter 105ms ease-out;
+    }
+
+    #char-img {
+      width: 100%;
+      max-height: min(37dvh, 380px);
+      object-fit: contain;
+      object-position: center bottom;
+      filter:
+        drop-shadow(0 0 9px rgba(255, 77, 184, 0.34))
+        drop-shadow(0 0 18px var(--accent-soft));
+    }
+
+    #bottom-area {
+      position: relative;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto auto auto;
+      justify-items: center;
+      align-content: start;
+      gap: clamp(8px, 1.5vh, 14px);
+      padding: clamp(10px, 1.8vh, 18px) clamp(14px, 4vw, 32px) max(12px, env(safe-area-inset-bottom));
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 26%),
+        linear-gradient(180deg, #17171a, #050505);
+    }
+
+    #bottom-area::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background: rgba(0, 0, 0, 0.58);
+      opacity: 0;
+      transition: opacity 180ms ease;
+    }
+
+    body[data-phase="analyze"] #bottom-area::after {
+      opacity: 1;
+    }
+
+    #bottom-area > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .stats-bar {
+      width: min(320px, var(--board-size));
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .stat {
+      min-width: 0;
+      padding: clamp(6px, 1.1vh, 8px) 9px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.046);
+      text-align: center;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.2;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 4px;
+      color: var(--ink);
+      font-size: clamp(19px, 4.8vw, 26px);
+      font-weight: 400;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #score-line {
+      position: absolute;
+      top: var(--top-area-height);
+      left: 50%;
+      z-index: 10;
+      min-width: min(260px, 62vw);
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 14px;
+      padding: 7px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 999px;
+      background: rgba(8, 8, 10, 0.72);
+      box-shadow: 0 0 24px rgba(0, 0, 0, 0.42), 0 0 22px var(--accent-soft);
+      transform: translate(-50%, calc(-50% - 25px));
+      pointer-events: none;
+    }
+
+    #score-line span {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    #score-line strong {
+      color: var(--ink);
+      font-size: clamp(22px, 4.6vw, 32px);
+      font-weight: 400;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #analyze-target {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 8px;
+      color: var(--muted);
+      opacity: 0;
+      pointer-events: none;
+      text-transform: uppercase;
+      transition: opacity 160ms ease;
+    }
+
+    body[data-phase="analyze"] #analyze-target {
+      opacity: 1;
+    }
+
+    #analyze-target span {
+      font-size: 12px;
+      line-height: 1.2;
+      text-shadow: 0 0 18px rgba(0, 0, 0, 0.72);
+    }
+
+    #analyze-target strong {
+      color: var(--accent);
+      font-size: clamp(92px, 24vh, 168px);
+      font-weight: 700;
+      line-height: 0.78;
+      text-align: center;
+      text-shadow: 0 0 24px var(--accent-soft), 0 0 56px rgba(0, 0, 0, 0.86);
+      transform: translateY(0) scale(1);
+      transition: transform 105ms ease-out;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #grid {
+      width: var(--board-size);
+      aspect-ratio: 1;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-template-rows: repeat(6, minmax(0, 1fr));
+      gap: clamp(6px, min(1.8vw, 1.15vh), 10px);
+      padding: clamp(10px, min(3vw, 1.9vh), 18px);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.052);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+    }
+
+    .cell {
+      width: 100%;
+      height: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 50%;
+      background: var(--cell-color);
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.13),
+        inset 0 -12px 18px rgba(0, 0, 0, 0.24),
+        0 9px 20px rgba(0, 0, 0, 0.26);
+      transform: scale(1);
+      transition: transform 120ms ease, opacity 150ms ease, filter 150ms ease, box-shadow 150ms ease;
+    }
+
+    .cell:hover:not(:disabled) {
+      transform: translateY(-2px) scale(1.05);
+      filter: brightness(1.12);
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+        0 0 18px var(--accent-soft),
+        0 12px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .cell:focus-visible {
+      outline: 3px solid var(--accent-soft);
+      outline-offset: 3px;
+    }
+
+    .cell:disabled {
+      cursor: default;
+      opacity: 0.48;
+    }
+
+    .cell.selected {
+      box-shadow:
+        0 0 0 2px var(--accent),
+        0 0 24px var(--accent-soft),
+        inset 0 -12px 18px rgba(0, 0, 0, 0.24);
+    }
+
+    .cell.clear {
+      animation: clear-pop 260ms ease forwards;
+    }
+
+    .cell.reject {
+      animation: reject 240ms ease;
+      filter: grayscale(0.2) brightness(0.82);
+    }
+
+    #feedback {
+      position: absolute;
+      left: 50%;
+      top: 46%;
+      z-index: 8;
+      min-width: 160px;
+      padding: 10px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      background: rgba(8, 8, 10, 0.86);
+      color: var(--ink);
+      text-align: center;
+      font-size: clamp(24px, 7vw, 40px);
+      font-weight: 700;
+      line-height: 1;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 10px) scale(0.94);
+    }
+
+    #feedback.show {
+      animation: feedback 820ms ease;
+    }
+
+    #feedback.perfect {
+      color: var(--accent);
+      border-color: var(--accent-soft);
+      text-shadow: 0 0 18px var(--accent-soft);
+    }
+
+    #feedback.miss {
+      color: var(--danger);
+    }
+
+    .actions {
+      width: var(--board-size);
+      display: grid;
+      grid-template-columns: 1fr;
+      align-items: center;
+    }
+
+    .primary {
+      min-height: 44px;
+      border-radius: 8px;
+      text-transform: uppercase;
+      transition: transform 160ms ease, background 160ms ease, color 160ms ease, border-color 160ms ease;
+    }
+
+    .primary {
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #050505;
+      font-weight: 700;
+    }
+
+    .settings-action {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--ink);
+      font-weight: 700;
+      text-transform: uppercase;
+      transition: transform 160ms ease, background 160ms ease, color 160ms ease, border-color 160ms ease;
+    }
+
+    .primary:hover,
+    .settings-action:hover {
+      transform: translateY(-1px);
+    }
+
+    .primary:active,
+    .settings-action:active {
+      transform: translateY(1px);
+    }
+
+    .primary:focus-visible,
+    .settings-action:focus-visible {
+      outline: 3px solid var(--accent-soft);
+      outline-offset: 3px;
+    }
+
+    .settings-action.danger {
+      border-color: rgba(255, 77, 109, 0.5);
+      color: #ff8ba0;
+    }
+
+    .settings-action.danger:hover {
+      background: rgba(255, 77, 109, 0.12);
+      color: #fff;
+    }
+
+    #modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      place-items: center;
+      padding: 24px;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(10px);
+    }
+
+    #modal-overlay.open {
+      display: grid;
+    }
+
+    #modal-content {
+      width: min(390px, 100%);
+      padding: 24px;
+      border: 1px solid var(--accent-soft);
+      border-radius: 8px;
+      background: #17171b;
+      box-shadow: 0 24px 88px rgba(0, 0, 0, 0.46);
+    }
+
+    #modal-content h2 {
+      margin: 0 0 18px;
+      color: var(--accent);
+      font-size: 24px;
+      font-weight: 400;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .setting-row {
+      display: grid;
+      gap: 10px;
+      padding: 14px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.11);
+    }
+
+    .setting-row label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      color: var(--muted);
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+
+    .setting-row strong {
+      color: var(--ink);
+      font-weight: 400;
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--accent);
+    }
+
+    #close-settings {
+      width: 100%;
+      margin-top: 16px;
+    }
+
+    @keyframes clear-pop {
+      0% { opacity: 1; transform: scale(1.08); }
+      100% { opacity: 0; transform: scale(0.08); }
+    }
+
+    @keyframes reject {
+      0%, 100% { transform: translateX(0); }
+      28% { transform: translateX(-5px); }
+      56% { transform: translateX(5px); }
+    }
+
+    @keyframes feedback {
+      0% { opacity: 0; transform: translate(-50%, 10px) scale(0.94); }
+      18% { opacity: 1; transform: translate(-50%, 0) scale(1.05); }
+      72% { opacity: 1; transform: translate(-50%, -6px) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -20px) scale(0.98); }
+    }
+
+    @keyframes wave-scroll {
+      0% { background-position: 0 0, 0 0; }
+      100% { background-position: 132px 0, 0 0; }
+    }
+
+    @media (max-height: 720px) {
+      #char-container {
+        width: min(54vw, 310px);
+      }
+
+      #char-img {
+        max-height: min(35dvh, 310px);
+      }
+
+      #status-overlay {
+        top: 12px;
+      }
+
+      #analyze-target strong {
+        font-size: clamp(76px, 20vh, 126px);
+      }
+    }
+
+    @media (max-width: 420px) {
+      .stats-bar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .stat span {
+        white-space: normal;
+      }
+
+      #analyze-target strong {
+        font-size: clamp(78px, 28vw, 122px);
+      }
+    }
+  </style>
+</head>
+<body data-phase="standby" data-evolution="0" data-pulse="0">
+  <button id="settings-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
+
+  <section id="top-area" aria-label="Character sync stage">
+    <div id="status-overlay" aria-live="polite">
+      <div id="phase-text">STANDBY</div>
+      <div id="metronome" aria-label="Beat meter"><div id="metronome-bar"></div></div>
+    </div>
+    <div id="sound-wave" aria-hidden="true">
+      <span class="wave-row"></span>
+      <span class="wave-row"></span>
+      <span class="wave-row"></span>
+      <span class="wave-row"></span>
+      <span class="wave-row"></span>
+    </div>
+    <div id="char-container">
+      <img id="char-img" src="assets/chara1.png" alt="RE:CORD character">
+    </div>
+  </section>
+
+  <div id="score-line" aria-live="polite">
+    <span>Score</span>
+    <strong id="score-readout">0</strong>
+  </div>
+
+  <section id="bottom-area" aria-label="Puzzle board">
+    <div class="stats-bar">
+      <div class="stat">
+        <span>BPM</span>
+        <strong id="bpm-readout">60</strong>
+      </div>
+      <div class="stat">
+        <span>Beat</span>
+        <strong id="beat-readout">0/4</strong>
+      </div>
+    </div>
+
+    <div id="analyze-target" aria-live="polite">
+      <span>Target Chain</span>
+      <strong id="target-num">--</strong>
+    </div>
+
+    <div id="grid"></div>
+    <div id="feedback"></div>
+
+    <div class="actions">
+      <button class="primary" id="start-btn" type="button">INITIALIZE</button>
+    </div>
+  </section>
+
+  <div id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <div id="modal-content">
+      <h2 id="settings-title">Settings</h2>
+      <div class="setting-row">
+        <label for="bpm-slider">
+          <span>BPM</span>
+          <strong id="bpm-val">60</strong>
+        </label>
+        <input type="range" id="bpm-slider" min="60" max="180" value="60">
+      </div>
+      <div class="setting-row">
+        <label for="diagonal-toggle">
+          <span>Diagonal Link</span>
+          <input type="checkbox" id="diagonal-toggle" checked>
+        </label>
+      </div>
+      <div class="setting-row">
+        <label for="audio-toggle">
+          <span>Beat Audio</span>
+          <input type="checkbox" id="audio-toggle" checked>
+        </label>
+      </div>
+      <div class="setting-row">
+        <label for="reset-btn">
+          <span>Reset</span>
+        </label>
+        <button class="settings-action danger" id="reset-btn" type="button">RESET GAME</button>
+      </div>
+      <button class="primary" id="close-settings" type="button">CLOSE</button>
+    </div>
+  </div>
+
+  <script>
+    const SIZE = 6;
+    const CYCLE_BEATS = 8;
+    const ANALYZE_BEATS = 4;
+    const BPM_MIN = 60;
+    const BPM_MAX = 180;
+    const SCORE_BPM_THRESHOLD = 10000;
+    const SCORE_BPM_INCREMENT = 20;
+    const TARGETS = [3, 4, 5, 6];
+    const COLORS = [
+      { id: "red", value: "#ff4d6d" },
+      { id: "green", value: "#58ff9a" },
+      { id: "blue", value: "#4d8dff" },
+      { id: "yellow", value: "#ffe066" },
+      { id: "violet", value: "#c77dff" }
+    ];
+    const CARDINAL_DIRS = [
+      [-1, 0],
+      [0, -1],
+      [0, 1],
+      [1, 0]
+    ];
+    const DIAGONAL_DIRS = [
+      [-1, -1],
+      [-1, 1],
+      [1, -1],
+      [1, 1]
+    ];
+
+    const grid = document.getElementById("grid");
+    const charContainer = document.getElementById("char-container");
+    const startBtn = document.getElementById("start-btn");
+    const resetBtn = document.getElementById("reset-btn");
+    const settingsBtn = document.getElementById("settings-btn");
+    const modal = document.getElementById("modal-overlay");
+    const closeSettings = document.getElementById("close-settings");
+    const bpmSlider = document.getElementById("bpm-slider");
+    const bpmVal = document.getElementById("bpm-val");
+    const bpmReadout = document.getElementById("bpm-readout");
+    const diagonalToggle = document.getElementById("diagonal-toggle");
+    const audioToggle = document.getElementById("audio-toggle");
+    const targetDisplay = document.getElementById("target-num");
+    const phaseText = document.getElementById("phase-text");
+    const metroBar = document.getElementById("metronome-bar");
+    const feedback = document.getElementById("feedback");
+    const beatReadout = document.getElementById("beat-readout");
+    const scoreReadout = document.getElementById("score-readout");
+
+    let board = [];
+    let bpm = BPM_MIN;
+    let beatDuration = 60000 / bpm;
+    let targetNum = 3;
+    let gameActive = false;
+    let resolving = false;
+    let startedAt = 0;
+    let frameId = 0;
+    let lastBeat = -1;
+    let lastCycle = -1;
+    let currentPhase = "standby";
+    let score = 0;
+    let scoreBpmStep = 0;
+    let sync = 0;
+    let evolution = 0;
+    let audioContext = null;
+
+    function randomItem(items) {
+      return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function createGrid() {
+      board = Array.from({ length: SIZE }, () => (
+        Array.from({ length: SIZE }, () => randomItem(COLORS).id)
+      ));
+      ensurePlayableGroup(targetNum);
+      renderGrid();
+    }
+
+    function renderGrid() {
+      grid.innerHTML = "";
+      board.forEach((row, rowIndex) => {
+        row.forEach((colorId, colIndex) => {
+          const color = COLORS.find((item) => item.id === colorId);
+          const cell = document.createElement("button");
+          cell.type = "button";
+          cell.className = "cell";
+          cell.dataset.row = rowIndex;
+          cell.dataset.col = colIndex;
+          cell.dataset.color = colorId;
+          cell.style.setProperty("--cell-color", color.value);
+          cell.setAttribute("aria-label", `${colorId} sync orb`);
+          cell.addEventListener("click", handleCellClick);
+          grid.appendChild(cell);
+        });
+      });
+      updateGridLock();
+    }
+
+    function handleCellClick(event) {
+      if (!gameActive || resolving || currentPhase !== "execute") return;
+
+      const row = Number(event.currentTarget.dataset.row);
+      const col = Number(event.currentTarget.dataset.col);
+      const cluster = findCluster(row, col);
+      const count = cluster.length;
+
+      if (count < targetNum) {
+        markCluster(cluster, "reject");
+        sync = Math.max(0, sync - 6);
+        showFeedback(`NEED ${targetNum}`, "miss");
+        playTone(120, 0.09, "sawtooth", 0.035);
+        updateStats();
+        window.setTimeout(() => unmarkCluster(cluster, "reject"), 260);
+        return;
+      }
+
+      resolving = true;
+      updateGridLock();
+      markCluster(cluster, "selected");
+      markCluster(cluster, "clear");
+
+      if (count === targetNum) {
+        score += 1000;
+        sync += 34;
+        showFeedback("PERFECT", "perfect");
+        playTone(920, 0.14, "sine", 0.05);
+      } else {
+        score += 520 + (count - targetNum) * 80;
+        sync += 20;
+        showFeedback(`${count} CHAIN`, "great");
+        playTone(560, 0.12, "triangle", 0.045);
+      }
+
+      if (sync >= 100) {
+        sync = 0;
+        evolution = (evolution + 1) % 4;
+        document.body.dataset.evolution = String(evolution);
+      }
+
+      applyScoreBpmBoost();
+      updateStats();
+      window.setTimeout(() => {
+        cluster.forEach(({ row: r, col: c }) => {
+          board[r][c] = randomItem(COLORS).id;
+        });
+        ensurePlayableGroup(targetNum);
+        renderGrid();
+        resolving = false;
+        updateGridLock();
+      }, 270);
+    }
+
+    function findCluster(startRow, startCol) {
+      const color = board[startRow][startCol];
+      const dirs = diagonalToggle.checked ? CARDINAL_DIRS.concat(DIAGONAL_DIRS) : CARDINAL_DIRS;
+      const stack = [[startRow, startCol]];
+      const visited = new Set();
+      const cluster = [];
+
+      while (stack.length) {
+        const [row, col] = stack.pop();
+        const key = `${row},${col}`;
+        if (visited.has(key)) continue;
+        visited.add(key);
+        if (row < 0 || row >= SIZE || col < 0 || col >= SIZE) continue;
+        if (board[row][col] !== color) continue;
+
+        cluster.push({ row, col });
+        dirs.forEach(([dr, dc]) => stack.push([row + dr, col + dc]));
+      }
+
+      return cluster;
+    }
+
+    function markCluster(cluster, className) {
+      cluster.forEach(({ row, col }) => {
+        const cell = grid.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+        if (cell) cell.classList.add(className);
+      });
+    }
+
+    function unmarkCluster(cluster, className) {
+      cluster.forEach(({ row, col }) => {
+        const cell = grid.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+        if (cell) cell.classList.remove(className);
+      });
+    }
+
+    function largestGroupSize() {
+      let largest = 0;
+      const seen = new Set();
+
+      for (let row = 0; row < SIZE; row += 1) {
+        for (let col = 0; col < SIZE; col += 1) {
+          const key = `${row},${col}`;
+          if (seen.has(key)) continue;
+          const cluster = findCluster(row, col);
+          cluster.forEach(({ row: r, col: c }) => seen.add(`${r},${c}`));
+          largest = Math.max(largest, cluster.length);
+        }
+      }
+
+      return largest;
+    }
+
+    function ensurePlayableGroup(target) {
+      if (largestGroupSize() >= target) return;
+      const color = randomItem(COLORS).id;
+      const row = Math.floor(Math.random() * SIZE);
+      const col = Math.floor(Math.random() * (SIZE - target + 1));
+
+      for (let offset = 0; offset < target; offset += 1) {
+        board[row][col + offset] = color;
+      }
+    }
+
+    function startGame() {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      audioContext.resume();
+
+      gameActive = true;
+      resolving = false;
+      startedAt = performance.now();
+      lastBeat = -1;
+      lastCycle = -1;
+      startBtn.textContent = "RESTART";
+      setPhase("analyze");
+      createGrid();
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(tick);
+    }
+
+    function resetGame() {
+      gameActive = false;
+      resolving = false;
+      cancelAnimationFrame(frameId);
+      score = 0;
+      scoreBpmStep = 0;
+      sync = 0;
+      evolution = 0;
+      lastBeat = -1;
+      lastCycle = -1;
+      targetNum = 3;
+      targetDisplay.textContent = "--";
+      beatReadout.textContent = "0/4";
+      metroBar.style.setProperty("--meter", "0%");
+      document.body.dataset.evolution = "0";
+      setBpm(BPM_MIN);
+      setPhase("standby");
+      startBtn.textContent = "INITIALIZE";
+      createGrid();
+      updateStats();
+      showFeedback("RESET", "great");
+    }
+
+    function tick(now) {
+      if (!gameActive) return;
+
+      const beatPosition = Math.max(0, (now - startedAt) / beatDuration);
+      const totalBeat = Math.floor(beatPosition);
+      const beatInCycle = totalBeat % CYCLE_BEATS;
+      const cycle = Math.floor(totalBeat / CYCLE_BEATS);
+      const phase = beatInCycle < ANALYZE_BEATS ? "analyze" : "execute";
+      const beatProgress = beatPosition - totalBeat;
+
+      if (cycle !== lastCycle) {
+        lastCycle = cycle;
+        targetNum = randomItem(TARGETS);
+        targetDisplay.textContent = targetNum;
+        ensurePlayableGroup(targetNum);
+        renderGrid();
+      }
+
+      if (phase !== currentPhase) {
+        setPhase(phase);
+      }
+
+      if (totalBeat !== lastBeat) {
+        lastBeat = totalBeat;
+        pulseBeat(beatInCycle);
+      }
+
+      metroBar.style.setProperty("--meter", `${Math.min(100, beatProgress * 100)}%`);
+      beatReadout.textContent = `${(beatInCycle % ANALYZE_BEATS) + 1}/4`;
+      frameId = requestAnimationFrame(tick);
+    }
+
+    function setPhase(phase) {
+      currentPhase = phase;
+      document.body.dataset.phase = phase;
+
+      if (phase === "analyze") {
+        phaseText.textContent = "ANALYZE PHASE";
+      } else if (phase === "execute") {
+        phaseText.textContent = "EXECUTE PHASE";
+      } else {
+        phaseText.textContent = "STANDBY";
+      }
+
+      updateGridLock();
+    }
+
+    function updateGridLock() {
+      const locked = !gameActive || resolving || currentPhase !== "execute";
+      grid.querySelectorAll(".cell").forEach((cell) => {
+        cell.disabled = locked;
+      });
+    }
+
+    function pulseBeat(beatInCycle) {
+      document.body.dataset.pulse = "1";
+      window.setTimeout(() => {
+        document.body.dataset.pulse = "0";
+      }, 110);
+
+      charContainer.style.setProperty("--beat", beatInCycle + 1);
+      playBeat(beatInCycle === 0 || beatInCycle === 4);
+    }
+
+    function setBpm(nextBpm) {
+      const now = performance.now();
+      const currentBeatPosition = gameActive ? (now - startedAt) / beatDuration : 0;
+      bpm = Math.min(BPM_MAX, Math.max(BPM_MIN, Number(nextBpm)));
+      beatDuration = 60000 / bpm;
+      if (gameActive) {
+        startedAt = now - currentBeatPosition * beatDuration;
+      }
+      bpmSlider.value = String(bpm);
+      bpmVal.textContent = bpm;
+      bpmReadout.textContent = bpm;
+    }
+
+    function applyScoreBpmBoost() {
+      const earnedStep = Math.floor(score / SCORE_BPM_THRESHOLD);
+
+      while (scoreBpmStep < earnedStep) {
+        scoreBpmStep += 1;
+        setBpm(bpm + SCORE_BPM_INCREMENT);
+      }
+    }
+
+    function updateStats() {
+      scoreReadout.textContent = score.toLocaleString("en-US");
+      bpmReadout.textContent = bpm;
+    }
+
+    function showFeedback(text, type) {
+      feedback.textContent = text;
+      feedback.className = "";
+      feedback.classList.add(type, "show");
+      window.setTimeout(() => {
+        feedback.classList.remove("show");
+      }, 820);
+    }
+
+    function playBeat(strong) {
+      if (!audioToggle.checked) return;
+      playTone(strong ? 660 : 330, 0.035, "triangle", strong ? 0.026 : 0.016);
+    }
+
+    function playTone(frequency, duration, type, volume) {
+      if (!audioContext || !audioToggle.checked) return;
+
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = type;
+      osc.frequency.value = frequency;
+      gain.gain.setValueAtTime(volume, audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      osc.start();
+      osc.stop(audioContext.currentTime + duration);
+    }
+
+    function openSettings() {
+      modal.classList.add("open");
+      bpmSlider.focus();
+    }
+
+    function closeSettingsModal() {
+      modal.classList.remove("open");
+      settingsBtn.focus();
+    }
+
+    settingsBtn.addEventListener("click", openSettings);
+    closeSettings.addEventListener("click", closeSettingsModal);
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) closeSettingsModal();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && modal.classList.contains("open")) {
+        closeSettingsModal();
+      }
+    });
+    bpmSlider.addEventListener("input", (event) => setBpm(event.target.value));
+    startBtn.addEventListener("click", startGame);
+    resetBtn.addEventListener("click", () => {
+      resetGame();
+      closeSettingsModal();
+    });
+
+    createGrid();
+    updateStats();
+  </script>
+</body>
+</html>

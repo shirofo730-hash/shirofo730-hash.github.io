@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>RE:CORD Prototype v1.2 (Diagonal Support)</title>
+    <style>
+        :root { --accent: #00f2ff; --bg: #1a1a1a; }
+        body { background: var(--bg); color: white; font-family: 'Georgia', serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
+        #ui-layer { position: absolute; top: 20px; text-align: center; width: 100%; pointer-events: none; }
+        #settings { position: absolute; bottom: 20px; pointer-events: auto; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); }
+        .target-display { font-size: 80px; font-weight: bold; margin: 10px; color: var(--accent); text-shadow: 0 0 20px var(--accent); animation: pulse 1s infinite alternate; }
+        @keyframes pulse { from { opacity: 0.8; transform: scale(0.95); } to { opacity: 1; transform: scale(1.05); } }
+        .phase-label { font-size: 18px; letter-spacing: 4px; text-transform: uppercase; opacity: 0.7; }
+        #grid { display: grid; grid-template-columns: repeat(6, 50px); gap: 10px; margin-top: 30px; cursor: pointer; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 15px; }
+        .cell { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        .cell:hover { transform: scale(1.1); box-shadow: 0 0 15px white; }
+        #feedback { font-size: 32px; font-weight: bold; height: 40px; margin-top: 20px; font-style: italic; }
+        #metronome { width: 350px; height: 6px; background: #333; margin: 15px auto; border-radius: 3px; overflow: hidden; }
+        #metronome-bar { width: 0%; height: 100%; background: var(--accent); box-shadow: 0 0 15px var(--accent); }
+        .perfect { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
+        .great { color: var(--accent); text-shadow: 0 0 10px var(--accent); }
+        .miss { color: #ff4444; }
+        button { background: transparent; color: white; border: 1px solid white; padding: 10px 25px; cursor: pointer; font-family: inherit; transition: all 0.3s; }
+        button:hover { background: white; color: black; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div class="phase-label" id="phase-text">Analyze Phase</div>
+        <div class="target-display" id="target-num">--</div>
+        <div id="metronome"><div id="metronome-bar"></div></div>
+    </div>
+
+    <div id="grid"></div>
+    <div id="feedback"></div>
+
+    <div id="settings">
+        <label>TEMPO (BPM): </label>
+        <input type="range" id="bpm-slider" min="40" max="160" value="80">
+        <span id="bpm-val">80</span><br>
+        <button id="start-btn" style="margin-top:15px;">START RE:CORDING</button>
+    </div>
+
+<script>
+    const grid = document.getElementById('grid');
+    const bpmSlider = document.getElementById('bpm-slider');
+    const bpmVal = document.getElementById('bpm-val');
+    const startBtn = document.getElementById('start-btn');
+    const targetDisplay = document.getElementById('target-num');
+    const phaseText = document.getElementById('phase-text');
+    const feedback = document.getElementById('feedback');
+    const metroBar = document.getElementById('metronome-bar');
+
+    let bpm = 80;
+    let beatDuration = 60000 / bpm;
+    let targetNum = 3;
+    let currentBeat = 0;
+    let isExecutePhase = false;
+    let gameActive = false;
+    // NieR/リバース1999を意識した少しくすんだスタイリッシュな配色
+    let colors = ['#5c6b73', '#9eb3c2', '#f1faee', '#e63946', '#a8dadc'];
+
+    function createGrid() {
+        grid.innerHTML = '';
+        for (let i = 0; i < 36; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            cell.onclick = () => handleCellClick(i);
+            grid.appendChild(cell);
+        }
+    }
+
+    function handleCellClick(index) {
+        if (!isExecutePhase || !gameActive) return;
+
+        const cells = document.querySelectorAll('.cell');
+        const color = cells[index].style.backgroundColor;
+        let cluster = findCluster(index, color);
+
+        if (cluster.length >= targetNum) {
+            if (cluster.length === targetNum) {
+                showFeedback("PERFECT SYNC!!", "perfect");
+            } else {
+                showFeedback(`GREAT! ${cluster.length} CHAINS`, "great");
+            }
+            cluster.forEach(i => {
+                cells[i].style.transform = "scale(0)";
+                setTimeout(() => {
+                    cells[i].style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    cells[i].style.transform = "scale(1)";
+                }, 200);
+            });
+        } else {
+            showFeedback(`MISS... NEED ${targetNum}`, "miss");
+        }
+    }
+
+    // 8方向判定ロジック (斜め対応)
+    function findCluster(idx, color, visited = new Set()) {
+        if (visited.has(idx)) return [];
+        const cells = document.querySelectorAll('.cell');
+        if (cells[idx].style.backgroundColor !== color) return [];
+
+        visited.add(idx);
+        let result = [idx];
+        const row = Math.floor(idx / 6);
+        const col = idx % 6;
+
+        const directions = [
+            [-1, 0], [1, 0], [0, -1], [0, 1], // 上下左右
+            [-1, -1], [-1, 1], [1, -1], [1, 1] // 斜め4方向
+        ];
+
+        for (let [dr, dc] of directions) {
+            const nr = row + dr;
+            const nc = col + dc;
+            if (nr >= 0 && nr < 6 && nc >= 0 && nc < 6) {
+                const nextIdx = nr * 6 + nc;
+                result = result.concat(findCluster(nextIdx, color, visited));
+            }
+        }
+        return result;
+    }
+
+    function showFeedback(text, cls) {
+        feedback.innerText = text;
+        feedback.className = cls;
+        setTimeout(() => { if(feedback.innerText === text) feedback.innerText = ""; }, 1500);
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        currentBeat++;
+        let phaseBeat = ((currentBeat - 1) % 8) + 1;
+
+        if (phaseBeat === 1) {
+            isExecutePhase = false;
+            targetNum = Math.floor(Math.random() * 4) + 3; // 3〜6
+            targetDisplay.innerText = targetNum;
+            phaseText.innerText = "Analyze Phase";
+            phaseText.style.color = "white";
+        } else if (phaseBeat === 5) {
+            isExecutePhase = true;
+            phaseText.innerText = "Execute Phase!";
+            phaseText.style.color = "var(--accent)";
+        }
+
+        // メトロノーム演出
+        metroBar.style.transition = 'none';
+        metroBar.style.width = '0%';
+        setTimeout(() => {
+            metroBar.style.transition = `width ${beatDuration}ms linear`;
+            metroBar.style.width = '100%';
+        }, 10);
+
+        setTimeout(gameLoop, beatDuration);
+    }
+
+    bpmSlider.oninput = () => {
+        bpm = bpmSlider.value;
+        bpmVal.innerText = bpm;
+        beatDuration = 60000 / bpm;
+    };
+
+    startBtn.onclick = () => {
+        gameActive = true;
+        createGrid();
+        gameLoop();
+        startBtn.style.display = "none";
+    };
+
+</script>
+</body>
+</html>
