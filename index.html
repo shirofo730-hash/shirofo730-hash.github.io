@@ -98,35 +98,44 @@
 
     #settings-btn {
       position: fixed;
-      top: max(14px, env(safe-area-inset-top));
-      right: max(14px, env(safe-area-inset-right));
+      top: max(12px, env(safe-area-inset-top));
+      right: max(12px, env(safe-area-inset-right));
       z-index: 20;
-      width: 42px;
-      height: 42px;
-      border: 1px solid rgba(255, 255, 255, 0.26);
-      border-radius: 50%;
+      width: 44px;
+      height: 34px;
+      border: 1px solid rgba(188, 255, 246, 0.24);
+      border-radius: 6px;
       background:
-        radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.32), transparent 0 16%),
-        radial-gradient(circle at center, rgba(0, 242, 255, 0.12), transparent 0 44%),
-        conic-gradient(from 32deg, #222, #5c555b, #151517, #3a3639, #222);
-      color: var(--ink);
-      font-size: 22px;
+        linear-gradient(135deg, rgba(255, 255, 255, 0.09), transparent 34% 72%, rgba(255, 255, 255, 0.035)),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 9px),
+        linear-gradient(180deg, rgba(24, 24, 28, 0.92), rgba(7, 7, 8, 0.9));
+      color: rgba(188, 255, 246, 0.82);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 17px;
       line-height: 1;
       display: grid;
       place-items: center;
       box-shadow:
-        inset 0 0 0 3px rgba(0, 0, 0, 0.34),
-        inset 0 -10px 18px rgba(0, 0, 0, 0.5),
-        0 10px 24px rgba(0, 0, 0, 0.42);
-      transition: border-color 160ms ease, color 160ms ease, transform 160ms ease;
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        inset 0 -12px 18px rgba(0, 0, 0, 0.38),
+        0 8px 18px rgba(0, 0, 0, 0.34),
+        0 0 14px rgba(0, 242, 255, 0.08);
+      text-shadow: 0 0 12px rgba(0, 242, 255, 0.26);
+      backdrop-filter: blur(8px);
+      transition: border-color 160ms ease, color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
     }
 
     #settings-btn:hover,
     #settings-btn:focus-visible {
-      border-color: var(--accent);
+      border-color: rgba(188, 255, 246, 0.56);
       color: var(--accent);
       outline: none;
-      transform: rotate(18deg);
+      transform: translateY(-1px);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 -12px 18px rgba(0, 0, 0, 0.34),
+        0 10px 22px rgba(0, 0, 0, 0.36),
+        0 0 18px var(--accent-soft);
     }
 
     #soul-layer {
@@ -370,6 +379,61 @@
       z-index: 1;
     }
 
+    #bottom-metronome-bg {
+      position: absolute;
+      inset: 7px clamp(8px, 2vw, 18px) 6px;
+      z-index: 0;
+      overflow: hidden;
+      border-radius: 8px;
+      pointer-events: none;
+      opacity: 0.8;
+      mix-blend-mode: screen;
+    }
+
+    #bottom-area > #bottom-metronome-bg {
+      z-index: 0;
+    }
+
+    #bottom-metronome-bg::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: var(--bottom-meter-progress, 0%);
+      background:
+        linear-gradient(0deg, rgba(0, 242, 255, 0.26), rgba(188, 255, 246, 0.2) 48%, rgba(255, 77, 184, 0.24)),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.24) 0 2px, transparent 2px 13px);
+      box-shadow:
+        inset 0 0 30px rgba(0, 242, 255, 0.22),
+        0 -8px 22px rgba(0, 242, 255, 0.26);
+      transition: height 18ms linear;
+    }
+
+    #bottom-metronome-bg::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: calc(var(--bottom-meter-progress, 0%) - 2px);
+      height: 5px;
+      background: linear-gradient(90deg, transparent, rgba(188, 255, 246, 0.92), rgba(255, 77, 184, 0.68), transparent);
+      filter: blur(1px);
+      box-shadow: 0 0 18px rgba(0, 242, 255, 0.58);
+      opacity: 0;
+      transition: bottom 18ms linear, opacity 120ms ease;
+    }
+
+    body[data-phase="analyze"] #bottom-metronome-bg,
+    body[data-phase="execute"] #bottom-metronome-bg {
+      opacity: 0.8;
+    }
+
+    body[data-phase="analyze"] #bottom-metronome-bg::after,
+    body[data-phase="execute"] #bottom-metronome-bg::after {
+      opacity: 1;
+    }
+
     .stats-bar {
       width: min(320px, var(--board-size));
       display: grid;
@@ -451,7 +515,7 @@
       display: flex;
       align-items: end;
       justify-content: center;
-      gap: 4px;
+      gap: 3px;
       width: 100%;
       height: 32px;
       --bass-hit: 1.04;
@@ -459,7 +523,7 @@
     }
 
     .sound-wave-icon span {
-      width: 6px;
+      width: 5px;
       height: var(--wave-h);
       min-height: 8px;
       background:
@@ -488,6 +552,9 @@
     .sound-wave-icon span:nth-child(3) { --wave-h: 14px; animation-delay: 28ms; }
     .sound-wave-icon span:nth-child(4) { --wave-h: 32px; animation-delay: 0ms; }
     .sound-wave-icon span:nth-child(5) { --wave-h: 22px; animation-delay: 14ms; }
+    .sound-wave-icon span:nth-child(6) { --wave-h: 30px; animation-delay: 4ms; }
+    .sound-wave-icon span:nth-child(7) { --wave-h: 16px; animation-delay: 24ms; }
+    .sound-wave-icon span:nth-child(8) { --wave-h: 26px; animation-delay: 10ms; }
 
     .beat-dots {
       display: flex;
@@ -882,14 +949,6 @@
       left: 50%;
       top: 46%;
       z-index: 8;
-      min-width: 160px;
-      padding: 10px 16px;
-      border: 1px solid rgba(0, 242, 255, 0.3);
-      border-radius: 6px;
-      background:
-        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 4px),
-        linear-gradient(180deg, rgba(0, 242, 255, 0.08), rgba(0, 0, 0, 0.72)),
-        var(--sampler-screen);
       color: var(--ink);
       text-align: center;
       font-size: clamp(24px, 7vw, 40px);
@@ -897,6 +956,9 @@
       line-height: 1;
       opacity: 0;
       pointer-events: none;
+      text-shadow:
+        0 0 14px rgba(0, 242, 255, 0.42),
+        0 4px 18px rgba(0, 0, 0, 0.86);
       transform: translate(-50%, 10px) scale(0.94);
     }
 
@@ -906,12 +968,14 @@
 
     #feedback.perfect {
       color: var(--accent);
-      border-color: var(--accent-soft);
       text-shadow: 0 0 18px var(--accent-soft);
     }
 
     #feedback.miss {
       color: var(--danger);
+      text-shadow:
+        0 0 16px rgba(255, 77, 109, 0.62),
+        0 4px 18px rgba(0, 0, 0, 0.86);
     }
 
     .actions {
@@ -1500,8 +1564,8 @@
 
     @keyframes feedback {
       0% { opacity: 0; transform: translate(-50%, 10px) scale(0.94); }
-      18% { opacity: 1; transform: translate(-50%, 0) scale(1.05); }
-      72% { opacity: 1; transform: translate(-50%, -6px) scale(1); }
+      18% { opacity: 0.9; transform: translate(-50%, 0) scale(1.05); }
+      72% { opacity: 0.9; transform: translate(-50%, -6px) scale(1); }
       100% { opacity: 0; transform: translate(-50%, -20px) scale(0.98); }
     }
 
@@ -1609,7 +1673,7 @@
   </style>
 </head>
 <body data-phase="standby" data-evolution="0" data-pulse="0" data-beat="0" data-bass="normal" data-miss-danger="0">
-  <button id="settings-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
+  <button id="settings-btn" type="button" aria-label="Settings" title="Settings">⚙︎</button>
   <div class="start-gate" id="start-gate">
     <button class="start-button" id="start-btn" type="button" aria-label="Start">
       <span class="glitch-text" id="start-text" data-text="START">START</span>
@@ -1639,9 +1703,13 @@
   </section>
 
   <section id="bottom-area" aria-label="Puzzle board">
+    <div id="bottom-metronome-bg" aria-hidden="true"></div>
     <div class="stats-bar">
       <div class="stat sound-stat" role="img" aria-label="BGM sound wave">
         <div class="sound-wave-icon" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
           <span></span>
           <span></span>
           <span></span>
@@ -1759,6 +1827,7 @@
       [1, 0]
     ];
     const grid = document.getElementById("grid");
+    const bottomArea = document.getElementById("bottom-area");
     const charContainer = document.getElementById("char-container");
     const charImg = document.getElementById("char-img");
     const startGate = document.getElementById("start-gate");
@@ -2053,6 +2122,7 @@
       resolving = false;
       resultActive = true;
       cancelAnimationFrame(frameId);
+      updateBottomMetronome(0);
       updateTimeGauge();
       setPhase("finish");
       updateGridLock();
@@ -2272,6 +2342,7 @@
       remainingTimeMs = TIME_LIMIT_MS;
       lastBeat = -1;
       lastCycle = -1;
+      updateBottomMetronome(0);
       updateTimeGauge();
       setPhase("analyze");
       createGrid();
@@ -2291,6 +2362,7 @@
       targetNum = 3;
       targetDisplay.textContent = "--";
       updateBeatDisplay(null);
+      updateBottomMetronome(0);
       document.body.dataset.evolution = "0";
       startBtn.setAttribute("aria-label", "Start");
       setBpm(BPM_MIN);
@@ -2316,6 +2388,7 @@
       targetNum = 3;
       targetDisplay.textContent = "--";
       updateBeatDisplay(null);
+      updateBottomMetronome(0);
       document.body.dataset.evolution = "0";
       window.clearTimeout(missImageTimer);
       closeResultOverlay();
@@ -2341,6 +2414,7 @@
       const beatInCycle = totalBeat % CYCLE_BEATS;
       const cycle = Math.floor(totalBeat / CYCLE_BEATS);
       const phase = beatInCycle < ANALYZE_BEATS ? "analyze" : "execute";
+      updateBottomMetronome(beatPosition - totalBeat);
       remainingTimeMs = Math.max(0, TIME_LIMIT_MS - (now - timeStartedAt));
       updateTimeGauge();
 
@@ -2378,6 +2452,11 @@
       const beat = beatInCycle % CYCLE_BEATS;
       beatReadout.dataset.beat = String(beat);
       beatReadout.setAttribute("aria-label", `Beat ${beat + 1} of 4`);
+    }
+
+    function updateBottomMetronome(progress) {
+      const clamped = Math.max(0, Math.min(1, progress));
+      bottomArea.style.setProperty("--bottom-meter-progress", `${(clamped * 100).toFixed(2)}%`);
     }
 
     function setPhase(phase) {
