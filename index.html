@@ -521,6 +521,88 @@
       box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
     }
 
+    .board-wrap {
+      position: relative;
+      width: var(--board-size);
+    }
+
+    #miss-gauge,
+    #time-gauge {
+      position: absolute;
+      top: 50%;
+      width: clamp(20px, 3.6vw, 26px);
+      height: min(250px, calc(var(--board-size) * 0.58));
+      padding: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 34% 72%, rgba(255, 255, 255, 0.05)),
+        #101012;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        inset 0 -16px 24px rgba(0, 0, 0, 0.46),
+        0 12px 26px rgba(0, 0, 0, 0.34);
+      display: grid;
+      grid-template-rows: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    #miss-gauge {
+      right: clamp(-42px, -5.8vw, -28px);
+      display: grid;
+      grid-template-rows: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    #time-gauge {
+      left: clamp(-42px, -5.8vw, -28px);
+      overflow: hidden;
+      display: flex;
+      align-items: end;
+    }
+
+    #time-gauge-fill {
+      width: 100%;
+      height: var(--time-left, 100%);
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, rgba(188, 255, 246, 0.98), var(--accent), rgba(0, 141, 156, 0.86));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.36),
+        0 0 14px rgba(0, 242, 255, 0.5);
+      transition: height 120ms linear, background 160ms ease, box-shadow 160ms ease;
+    }
+
+    body[data-time-low="1"] #time-gauge-fill {
+      background:
+        linear-gradient(180deg, rgba(255, 224, 102, 0.98), rgba(255, 77, 109, 0.94));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.28),
+        0 0 16px rgba(255, 77, 109, 0.62);
+    }
+
+    .miss-gauge-segment {
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.03)),
+        rgba(255, 255, 255, 0.07);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+      opacity: 0.62;
+      transition: opacity 140ms ease, background 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+    }
+
+    .miss-gauge-segment.active {
+      background:
+        linear-gradient(180deg, rgba(255, 174, 188, 0.96), var(--danger));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.28),
+        0 0 14px rgba(255, 77, 109, 0.62);
+      opacity: 1;
+      transform: scaleX(1.08);
+    }
+
     .cell {
       width: 100%;
       height: 100%;
@@ -915,6 +997,194 @@
       display: grid;
     }
 
+    #result-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 980;
+      display: none;
+      place-items: center;
+      padding: 24px;
+      background:
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.032) 0 1px, transparent 1px 12px),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 5px),
+        radial-gradient(circle at center, rgba(0, 242, 255, 0.16), transparent 34%),
+        rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(12px);
+      opacity: 0;
+      transition: opacity 240ms ease;
+    }
+
+    #result-overlay.open {
+      display: grid;
+      opacity: 1;
+    }
+
+    #result-panel {
+      position: relative;
+      width: min(430px, 100%);
+      overflow: hidden;
+      padding: 26px;
+      border: 1px solid rgba(0, 242, 255, 0.35);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.09), transparent 34% 72%, rgba(255, 255, 255, 0.04)),
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.024) 0 1px, transparent 1px 8px),
+        #101114;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        inset 0 -22px 40px rgba(0, 0, 0, 0.52),
+        0 28px 90px rgba(0, 0, 0, 0.58),
+        0 0 46px var(--result-glow, rgba(0, 242, 255, 0.18));
+      text-align: center;
+      transform: translateY(14px) scale(0.96);
+      animation: result-enter 420ms cubic-bezier(0.2, 0.8, 0.18, 1) forwards;
+    }
+
+    #result-panel::before,
+    #result-panel::after {
+      content: "";
+      position: absolute;
+      inset: -18%;
+      pointer-events: none;
+    }
+
+    #result-panel::before {
+      background:
+        repeating-linear-gradient(90deg, transparent 0 14px, var(--result-glow, rgba(0, 242, 255, 0.16)) 14px 16px, transparent 16px 30px),
+        repeating-linear-gradient(0deg, transparent 0 18px, rgba(255, 77, 184, 0.09) 18px 20px, transparent 20px 36px);
+      opacity: var(--result-noise, 0.34);
+      animation: glitch-noise var(--result-noise-speed, 260ms) steps(2, end) infinite;
+    }
+
+    #result-panel::after {
+      background: radial-gradient(circle at center, transparent 0 48%, rgba(0, 0, 0, 0.34) 76%);
+    }
+
+    .result-content {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 18px;
+    }
+
+    .result-label {
+      color: rgba(205, 214, 215, 0.72);
+      font-size: 11px;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .result-score {
+      padding: 16px 18px 14px;
+      border: 1px solid rgba(0, 242, 255, 0.26);
+      border-radius: 6px;
+      background:
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 4px),
+        linear-gradient(180deg, rgba(0, 242, 255, 0.08), rgba(0, 0, 0, 0.72)),
+        var(--sampler-screen);
+      box-shadow: inset 0 0 22px rgba(0, 242, 255, 0.12);
+    }
+
+    #result-score-value {
+      display: block;
+      margin-top: 8px;
+      color: rgba(188, 255, 246, 0.96);
+      font-size: clamp(42px, 12vw, 68px);
+      font-weight: 700;
+      line-height: 0.9;
+      font-variant-numeric: tabular-nums;
+      text-shadow:
+        2px 0 rgba(255, 77, 184, 0.56),
+        -2px 0 rgba(0, 242, 255, 0.56),
+        0 0 28px var(--result-glow, rgba(0, 242, 255, 0.34));
+    }
+
+    .result-rank {
+      min-height: 142px;
+      display: grid;
+      place-items: center;
+      opacity: 0;
+      transform: scale(0.82);
+    }
+
+    .result-rank.visible {
+      opacity: 1;
+      transform: scale(1);
+      animation: rank-reveal var(--result-rank-speed, 720ms) steps(3, end) both;
+    }
+
+    #result-rank-value {
+      position: relative;
+      color: var(--result-color, var(--accent));
+      font-size: clamp(112px, 32vw, 196px);
+      font-weight: 700;
+      line-height: 0.72;
+      text-shadow:
+        5px 0 rgba(255, 77, 184, 0.8),
+        -5px 0 rgba(0, 242, 255, 0.78),
+        0 0 34px var(--result-glow, var(--accent-soft)),
+        0 0 70px var(--result-glow, var(--accent-soft));
+    }
+
+    #result-rank-value::before,
+    #result-rank-value::after {
+      content: attr(data-rank);
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    #result-rank-value::before {
+      color: #ff4db8;
+      transform: translate(-7px, -3px);
+      clip-path: inset(0 0 56% 0);
+      animation: glitch-slice-a 260ms steps(2, end) infinite;
+    }
+
+    #result-rank-value::after {
+      color: #00f2ff;
+      transform: translate(7px, 3px);
+      clip-path: inset(48% 0 0 0);
+      animation: glitch-slice-b 300ms steps(2, end) infinite;
+    }
+
+    #result-panel[data-rank="S"] {
+      --result-color: #ffe066;
+      --result-glow: rgba(255, 224, 102, 0.58);
+      --result-noise: 0.86;
+      --result-noise-speed: 130ms;
+      --result-rank-speed: 880ms;
+    }
+
+    #result-panel[data-rank="A"] {
+      --result-color: #00f2ff;
+      --result-glow: rgba(0, 242, 255, 0.46);
+      --result-noise: 0.66;
+      --result-noise-speed: 170ms;
+      --result-rank-speed: 740ms;
+    }
+
+    #result-panel[data-rank="B"] {
+      --result-color: #c77dff;
+      --result-glow: rgba(199, 125, 255, 0.38);
+      --result-noise: 0.48;
+      --result-noise-speed: 220ms;
+      --result-rank-speed: 620ms;
+    }
+
+    #result-panel[data-rank="C"] {
+      --result-color: #ff8ba0;
+      --result-glow: rgba(255, 77, 109, 0.34);
+      --result-noise: 0.32;
+      --result-noise-speed: 300ms;
+      --result-rank-speed: 500ms;
+    }
+
+    #result-restart {
+      width: 100%;
+    }
+
     #modal-content {
       width: min(390px, 100%);
       padding: 24px;
@@ -998,6 +1268,20 @@
       100% { opacity: 0; transform: translate(-50%, -20px) scale(0.98); }
     }
 
+    @keyframes result-enter {
+      0% { opacity: 0; transform: translateY(20px) scale(0.92); filter: brightness(1.3); }
+      46% { opacity: 1; transform: translateY(-4px) scale(1.025); filter: brightness(1.75); }
+      100% { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); }
+    }
+
+    @keyframes rank-reveal {
+      0% { opacity: 0; transform: translate3d(-10px, 6px, 0) scale(0.72); filter: brightness(2.2) contrast(1.4); }
+      16% { opacity: 1; transform: translate3d(12px, -4px, 0) scale(1.18); }
+      30% { transform: translate3d(-8px, 3px, 0) scale(0.98); }
+      48% { transform: translate3d(5px, -2px, 0) scale(1.08); }
+      100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: brightness(1) contrast(1); }
+    }
+
     @keyframes char-beat-bounce {
       0% { transform: translate3d(0, 26px, 0) scale(1.5); }
       42% { transform: translate3d(0, 16px, 0) scale(1.515); }
@@ -1062,6 +1346,21 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
+      #miss-gauge {
+        right: 6px;
+        width: 18px;
+        height: min(210px, calc(var(--board-size) * 0.52));
+        padding: 5px;
+        gap: 5px;
+      }
+
+      #time-gauge {
+        left: 6px;
+        width: 18px;
+        height: min(210px, calc(var(--board-size) * 0.52));
+        padding: 5px;
+      }
+
       .stat span {
         white-space: normal;
       }
@@ -1119,7 +1418,19 @@
       <strong id="target-num">--</strong>
     </div>
 
-    <div id="grid"></div>
+    <div class="board-wrap">
+      <div id="time-gauge" role="meter" aria-label="Time limit" aria-valuemin="0" aria-valuemax="120" aria-valuenow="120">
+        <div id="time-gauge-fill"></div>
+      </div>
+      <div id="grid"></div>
+      <div id="miss-gauge" role="meter" aria-label="Miss gauge" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0">
+        <span class="miss-gauge-segment"></span>
+        <span class="miss-gauge-segment"></span>
+        <span class="miss-gauge-segment"></span>
+        <span class="miss-gauge-segment"></span>
+        <span class="miss-gauge-segment"></span>
+      </div>
+    </div>
     <div id="feedback"></div>
   </section>
 
@@ -1155,10 +1466,31 @@
     </div>
   </div>
 
+  <div id="result-overlay" role="dialog" aria-modal="true" aria-labelledby="result-title">
+    <div id="result-panel" data-rank="C">
+      <div class="result-content">
+        <div>
+          <div class="result-label" id="result-title">Result</div>
+          <div class="result-score">
+            <span class="result-label">Total Score</span>
+            <strong id="result-score-value">0</strong>
+          </div>
+        </div>
+        <div class="result-rank" id="result-rank-wrap" aria-live="polite">
+          <strong id="result-rank-value" data-rank="-">-</strong>
+        </div>
+        <button class="primary" id="result-restart" type="button">RESTART</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const SIZE = 6;
     const CYCLE_BEATS = 8;
     const ANALYZE_BEATS = 4;
+    const MAX_MISSES = 5;
+    const TIME_LIMIT_MS = 120000;
+    const RESULT_COUNT_MS = 1500;
     const BPM_MIN = 60;
     const BPM_MAX = 180;
     const SCORE_BPM_THRESHOLD = 5000;
@@ -1211,6 +1543,16 @@
     const feedback = document.getElementById("feedback");
     const beatReadout = document.getElementById("beat-readout");
     const scoreReadout = document.getElementById("score-readout");
+    const missGauge = document.getElementById("miss-gauge");
+    const missGaugeSegments = Array.from(document.querySelectorAll(".miss-gauge-segment"));
+    const timeGauge = document.getElementById("time-gauge");
+    const timeGaugeFill = document.getElementById("time-gauge-fill");
+    const resultOverlay = document.getElementById("result-overlay");
+    const resultPanel = document.getElementById("result-panel");
+    const resultScoreValue = document.getElementById("result-score-value");
+    const resultRankWrap = document.getElementById("result-rank-wrap");
+    const resultRankValue = document.getElementById("result-rank-value");
+    const resultRestart = document.getElementById("result-restart");
 
     let board = [];
     let bpm = BPM_MIN;
@@ -1219,18 +1561,24 @@
     let gameActive = false;
     let resolving = false;
     let startedAt = 0;
+    let timeStartedAt = 0;
+    let remainingTimeMs = TIME_LIMIT_MS;
     let frameId = 0;
     let lastBeat = -1;
     let lastCycle = -1;
     let currentPhase = "standby";
     let score = 0;
     let scoreBpmStep = 0;
+    let missCount = 0;
     let sync = 0;
     let evolution = 0;
     let audioContext = null;
     let musicMaster = null;
     let noiseBuffer = null;
     let startSequenceActive = false;
+    let resultActive = false;
+    let resultTimer = 0;
+    let resultFrameId = 0;
     let missImageTimer = 0;
 
     function randomItem(items) {
@@ -1277,9 +1625,11 @@
         markCluster(cluster, "reject");
         sync = Math.max(0, sync - 6);
         flashMissCharacter();
+        const ended = registerMiss();
+        updateStats();
+        if (ended) return;
         showFeedback(`NEED ${targetNum}`, "miss");
         playTone(120, 0.09, "sawtooth", 0.035);
-        updateStats();
         window.setTimeout(() => unmarkCluster(cluster, "reject"), 260);
         return;
       }
@@ -1300,6 +1650,8 @@
         showFeedback(`${count} CHAIN`, "great");
         playTone(560, 0.12, "triangle", 0.045);
       }
+
+      registerSuccess();
 
       if (sync >= 100) {
         sync = 0;
@@ -1356,6 +1708,151 @@
       });
     }
 
+    function updateMissGauge() {
+      missGauge.setAttribute("aria-valuenow", String(missCount));
+      missGaugeSegments.forEach((segment, index) => {
+        segment.classList.toggle("active", index >= MAX_MISSES - missCount);
+      });
+    }
+
+    function updateTimeGauge() {
+      const ratio = Math.max(0, Math.min(1, remainingTimeMs / TIME_LIMIT_MS));
+      const secondsLeft = Math.ceil(remainingTimeMs / 1000);
+
+      timeGaugeFill.style.setProperty("--time-left", `${ratio * 100}%`);
+      timeGauge.setAttribute("aria-valuenow", String(secondsLeft));
+      document.body.dataset.timeLow = ratio <= 0.2 && gameActive ? "1" : "0";
+    }
+
+    function registerMiss() {
+      missCount = Math.min(MAX_MISSES, missCount + 1);
+      updateMissGauge();
+
+      if (missCount >= MAX_MISSES) {
+        finishGame();
+        return true;
+      }
+
+      return false;
+    }
+
+    function registerSuccess() {
+      if (missCount <= 0) return;
+      missCount -= 1;
+      updateMissGauge();
+    }
+
+    function finishGame() {
+      if (resultActive) return;
+
+      gameActive = false;
+      resolving = false;
+      resultActive = true;
+      cancelAnimationFrame(frameId);
+      updateTimeGauge();
+      setPhase("finish");
+      updateGridLock();
+      showFeedback("FINISH!", "perfect");
+      playFinishCue();
+      window.clearTimeout(resultTimer);
+      resultTimer = window.setTimeout(openResultOverlay, 950);
+    }
+
+    function getRank(totalScore) {
+      if (totalScore >= 55000) return "S";
+      if (totalScore >= 40000) return "A";
+      if (totalScore >= 20000) return "B";
+      return "C";
+    }
+
+    function openResultOverlay() {
+      const rank = getRank(score);
+
+      resultPanel.dataset.rank = rank;
+      resultScoreValue.textContent = "0";
+      resultRankWrap.classList.remove("visible");
+      resultRankWrap.dataset.visible = "0";
+      resultRankWrap.removeAttribute("style");
+      resultRankValue.textContent = "-";
+      resultRankValue.dataset.rank = "-";
+      resultOverlay.classList.add("open");
+      animateResultScore(score, rank);
+    }
+
+    function animateResultScore(finalScore, rank) {
+      const started = performance.now();
+      cancelAnimationFrame(resultFrameId);
+
+      function step(now) {
+        const progress = Math.min(1, (now - started) / RESULT_COUNT_MS);
+        const eased = 1 - ((1 - progress) ** 3);
+        const value = Math.round(finalScore * eased);
+
+        resultScoreValue.textContent = value.toLocaleString("en-US");
+
+        if (progress < 1) {
+          resultFrameId = requestAnimationFrame(step);
+          return;
+        }
+
+        resultScoreValue.textContent = finalScore.toLocaleString("en-US");
+        revealRank(rank);
+      }
+
+      resultFrameId = requestAnimationFrame(step);
+    }
+
+    function revealRank(rank) {
+      resultRankValue.textContent = rank;
+      resultRankValue.dataset.rank = rank;
+      resultRankWrap.classList.remove("visible");
+      resultRankWrap.dataset.visible = "0";
+      resultRankWrap.removeAttribute("style");
+      void resultRankWrap.offsetWidth;
+      resultRankWrap.classList.add("visible");
+      resultRankWrap.dataset.visible = "1";
+      resultRankWrap.style.opacity = "1";
+      resultRankWrap.style.transform = "scale(1)";
+      resultRankWrap.style.animation = "rank-reveal var(--result-rank-speed, 720ms) steps(3, end) both";
+      playRankCue(rank);
+    }
+
+    function closeResultOverlay() {
+      resultOverlay.classList.remove("open");
+      window.clearTimeout(resultTimer);
+      cancelAnimationFrame(resultFrameId);
+      resultRankWrap.classList.remove("visible");
+      resultRankWrap.dataset.visible = "0";
+      resultRankWrap.removeAttribute("style");
+    }
+
+    function restartFromResult() {
+      closeResultOverlay();
+      resetRunProgress();
+      createGrid();
+      setStartText("START");
+      startGate.classList.remove("hidden", "counting");
+      beginStartSequence();
+    }
+
+    function playFinishCue() {
+      playTone(440, 0.09, "sawtooth", 0.034);
+      window.setTimeout(() => playTone(660, 0.1, "triangle", 0.036), 110);
+      window.setTimeout(() => playTone(990, 0.13, "sine", 0.04), 230);
+    }
+
+    function playRankCue(rank) {
+      const cues = {
+        S: [880, 1108, 1320, 1760],
+        A: [660, 880, 1320],
+        B: [523, 784],
+        C: [392]
+      };
+      (cues[rank] || cues.C).forEach((frequency, index) => {
+        window.setTimeout(() => playTone(frequency, 0.16, "sawtooth", 0.034), index * 70);
+      });
+    }
+
     function largestGroupSize() {
       let largest = 0;
       const seen = new Set();
@@ -1406,6 +1903,10 @@
       const sequence = ["3", "2", "1", "RE:CODE"];
       let index = 0;
 
+      if (resultActive) {
+        resetRunProgress();
+      }
+
       startSequenceActive = true;
       startBtn.disabled = true;
       startGate.classList.add("counting");
@@ -1438,12 +1939,36 @@
       gameActive = true;
       resolving = false;
       startedAt = performance.now();
+      timeStartedAt = startedAt;
+      remainingTimeMs = TIME_LIMIT_MS;
       lastBeat = -1;
       lastCycle = -1;
+      updateTimeGauge();
       setPhase("analyze");
       createGrid();
       cancelAnimationFrame(frameId);
       frameId = requestAnimationFrame(tick);
+    }
+
+    function resetRunProgress() {
+      score = 0;
+      scoreBpmStep = 0;
+      missCount = 0;
+      remainingTimeMs = TIME_LIMIT_MS;
+      timeStartedAt = 0;
+      sync = 0;
+      evolution = 0;
+      resultActive = false;
+      targetNum = 3;
+      targetDisplay.textContent = "--";
+      beatReadout.textContent = "0/4";
+      metroBar.style.setProperty("--meter", "0%");
+      document.body.dataset.evolution = "0";
+      startBtn.setAttribute("aria-label", "Start");
+      setBpm(BPM_MIN);
+      updateMissGauge();
+      updateTimeGauge();
+      updateStats();
     }
 
     function resetGame() {
@@ -1452,8 +1977,12 @@
       cancelAnimationFrame(frameId);
       score = 0;
       scoreBpmStep = 0;
+      missCount = 0;
+      remainingTimeMs = TIME_LIMIT_MS;
+      timeStartedAt = 0;
       sync = 0;
       evolution = 0;
+      resultActive = false;
       lastBeat = -1;
       lastCycle = -1;
       targetNum = 3;
@@ -1462,13 +1991,17 @@
       metroBar.style.setProperty("--meter", "0%");
       document.body.dataset.evolution = "0";
       window.clearTimeout(missImageTimer);
+      closeResultOverlay();
       setBpm(BPM_MIN);
       setPhase("standby");
       startSequenceActive = false;
       setStartText("START");
       startBtn.disabled = false;
+      startBtn.setAttribute("aria-label", "Start");
       startGate.classList.remove("hidden", "counting");
       createGrid();
+      updateMissGauge();
+      updateTimeGauge();
       updateStats();
       showFeedback("RESET", "great");
     }
@@ -1482,6 +2015,13 @@
       const cycle = Math.floor(totalBeat / CYCLE_BEATS);
       const phase = beatInCycle < ANALYZE_BEATS ? "analyze" : "execute";
       const beatProgress = beatPosition - totalBeat;
+      remainingTimeMs = Math.max(0, TIME_LIMIT_MS - (now - timeStartedAt));
+      updateTimeGauge();
+
+      if (remainingTimeMs <= 0) {
+        finishGame();
+        return;
+      }
 
       if (cycle !== lastCycle) {
         lastCycle = cycle;
@@ -1513,6 +2053,8 @@
         phaseText.textContent = "ANALYZE PHASE";
       } else if (phase === "execute") {
         phaseText.textContent = "EXECUTE PHASE";
+      } else if (phase === "finish") {
+        phaseText.textContent = "FINISH";
       } else {
         phaseText.textContent = "STANDBY";
       }
@@ -1902,12 +2444,15 @@
     });
     bpmSlider.addEventListener("input", (event) => setBpm(event.target.value));
     startBtn.addEventListener("click", beginStartSequence);
+    resultRestart.addEventListener("click", restartFromResult);
     resetBtn.addEventListener("click", () => {
       resetGame();
       closeSettingsModal();
     });
 
     createGrid();
+    updateMissGauge();
+    updateTimeGauge();
     updateStats();
   </script>
 </body>
