@@ -17,6 +17,11 @@
       --muted: #9da1a6;
       --line: rgba(255, 255, 255, 0.16);
       --panel: rgba(255, 255, 255, 0.055);
+      --sampler-black: #09090a;
+      --sampler-face: #17171a;
+      --sampler-edge: #343136;
+      --sampler-screen: rgba(0, 12, 14, 0.84);
+      --sampler-groove: rgba(255, 255, 255, 0.07);
       color-scheme: dark;
       font-family: Georgia, "Times New Roman", serif;
     }
@@ -38,8 +43,11 @@
       min-height: 100dvh;
       overflow: hidden;
       background:
-        radial-gradient(circle at 50% 14%, rgba(113, 32, 82, 0.3), transparent 34%),
-        linear-gradient(180deg, #060608 0%, var(--bg) 47%, #000 100%);
+        radial-gradient(circle at 50% 10%, rgba(0, 242, 255, 0.12), transparent 28%),
+        radial-gradient(circle at 86% 52%, rgba(255, 77, 184, 0.1), transparent 24%),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 16px),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 14px),
+        linear-gradient(180deg, #070708 0%, #111114 42%, #020202 100%);
       color: var(--ink);
       position: relative;
       display: grid;
@@ -61,7 +69,9 @@
 
     body[data-phase="execute"] {
       background:
-        radial-gradient(circle at 50% 16%, rgba(0, 242, 255, 0.2), transparent 34%),
+        radial-gradient(circle at 50% 16%, rgba(0, 242, 255, 0.18), transparent 34%),
+        radial-gradient(circle at 82% 52%, rgba(88, 255, 154, 0.08), transparent 24%),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 16px),
         linear-gradient(180deg, #08090d 0%, #10151a 47%, #000 100%);
     }
 
@@ -85,14 +95,21 @@
       z-index: 20;
       width: 42px;
       height: 42px;
-      border: 1px solid var(--line);
+      border: 1px solid rgba(255, 255, 255, 0.26);
       border-radius: 50%;
-      background: rgba(0, 0, 0, 0.36);
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.32), transparent 0 16%),
+        radial-gradient(circle at center, rgba(0, 242, 255, 0.12), transparent 0 44%),
+        conic-gradient(from 32deg, #222, #5c555b, #151517, #3a3639, #222);
       color: var(--ink);
       font-size: 22px;
       line-height: 1;
       display: grid;
       place-items: center;
+      box-shadow:
+        inset 0 0 0 3px rgba(0, 0, 0, 0.34),
+        inset 0 -10px 18px rgba(0, 0, 0, 0.5),
+        0 10px 24px rgba(0, 0, 0, 0.42);
       transition: border-color 160ms ease, color 160ms ease, transform 160ms ease;
     }
 
@@ -110,19 +127,32 @@
       overflow: hidden;
       display: grid;
       place-items: end center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.055), transparent 24% 78%, rgba(255, 255, 255, 0.035)),
+        radial-gradient(circle at 50% 72%, rgba(255, 77, 184, 0.14), transparent 38%),
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.026) 0 1px, transparent 1px 9px),
+        linear-gradient(180deg, #151417, #08080a 84%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        inset 0 -18px 34px rgba(0, 0, 0, 0.68),
+        0 10px 32px rgba(0, 0, 0, 0.36);
       isolation: isolate;
     }
 
     #top-area::before {
       content: "";
       position: absolute;
-      inset: 0;
+      inset: 10px 12px 0;
+      border: 1px solid rgba(255, 255, 255, 0.085);
+      border-bottom: 0;
+      border-radius: 8px 8px 0 0;
       background:
-        linear-gradient(90deg, transparent 0 48%, rgba(0, 242, 255, 0.1) 49%, transparent 51%),
-        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 18px);
-      opacity: 0.45;
-      pointer-events: auto;
+        linear-gradient(90deg, transparent 0 22%, rgba(0, 242, 255, 0.11) 22% 22.4%, transparent 22.4% 77.6%, rgba(255, 77, 184, 0.1) 77.6% 78%, transparent 78%),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.038) 0 1px, transparent 1px 22px),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 18px);
+      opacity: 0.5;
+      pointer-events: none;
       z-index: -2;
     }
 
@@ -144,7 +174,7 @@
       width: min(360px, calc(100vw - 76px));
       transform: translateX(-50%);
       display: grid;
-      gap: 9px;
+      gap: 8px;
       justify-items: center;
       text-align: center;
       pointer-events: none;
@@ -152,26 +182,43 @@
 
     #phase-text {
       min-height: 16px;
-      color: rgba(248, 247, 242, 0.82);
-      font-size: 12px;
+      min-width: min(220px, 62vw);
+      padding: 6px 14px 5px;
+      border: 1px solid rgba(0, 242, 255, 0.26);
+      border-radius: 4px;
+      background:
+        linear-gradient(180deg, rgba(0, 242, 255, 0.1), rgba(0, 0, 0, 0.46)),
+        var(--sampler-screen);
+      color: rgba(177, 255, 245, 0.9);
+      font-size: 11px;
       line-height: 1.2;
       text-transform: uppercase;
+      box-shadow:
+        inset 0 0 18px rgba(0, 242, 255, 0.12),
+        0 0 18px rgba(0, 0, 0, 0.42);
     }
 
     #metronome {
       width: min(240px, 64vw);
-      height: 5px;
+      height: 10px;
+      padding: 2px;
       overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 3px;
+      background:
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.16) 0 1px, transparent 1px 12.5%),
+        rgba(0, 0, 0, 0.58);
+      box-shadow:
+        inset 0 0 0 1px rgba(0, 0, 0, 0.72),
+        0 0 18px rgba(0, 242, 255, 0.1);
     }
 
     #metronome-bar {
       width: var(--meter, 0%);
       height: 100%;
-      border-radius: inherit;
-      background: var(--accent);
+      border-radius: 2px;
+      background:
+        linear-gradient(90deg, rgba(0, 242, 255, 0.92), var(--accent), rgba(255, 77, 184, 0.86));
       box-shadow: 0 0 18px var(--accent);
     }
 
@@ -261,8 +308,29 @@
       gap: clamp(8px, 1.5vh, 14px);
       padding: clamp(10px, 1.8vh, 18px) clamp(14px, 4vw, 32px) max(12px, env(safe-area-inset-bottom));
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 26%),
-        linear-gradient(180deg, #17171a, #050505);
+        radial-gradient(circle at 22% 20%, rgba(0, 242, 255, 0.08), transparent 24%),
+        radial-gradient(circle at 78% 18%, rgba(255, 77, 184, 0.07), transparent 22%),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 18px),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 16px),
+        linear-gradient(180deg, #151518, #060606 74%);
+      box-shadow: inset 0 16px 32px rgba(0, 0, 0, 0.48);
+      isolation: isolate;
+    }
+
+    #bottom-area::before {
+      content: "";
+      position: absolute;
+      inset: 7px clamp(8px, 2vw, 18px) 6px;
+      z-index: 0;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 8% 7%, rgba(255, 255, 255, 0.12) 0 2px, transparent 3px),
+        radial-gradient(circle at 92% 7%, rgba(255, 255, 255, 0.12) 0 2px, transparent 3px),
+        radial-gradient(circle at 8% 93%, rgba(255, 255, 255, 0.12) 0 2px, transparent 3px),
+        radial-gradient(circle at 92% 93%, rgba(255, 255, 255, 0.12) 0 2px, transparent 3px),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.05), transparent 30% 72%, rgba(255, 255, 255, 0.03));
+      pointer-events: none;
     }
 
     #bottom-area::after {
@@ -289,21 +357,55 @@
       width: min(320px, var(--board-size));
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
+      gap: 10px;
     }
 
     .stat {
+      position: relative;
+      overflow: hidden;
       min-width: 0;
-      padding: clamp(6px, 1.1vh, 8px) 9px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: clamp(7px, 1.1vh, 9px) 10px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
       border-radius: 8px;
-      background: rgba(255, 255, 255, 0.046);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 42%),
+        linear-gradient(135deg, rgba(0, 242, 255, 0.08), rgba(255, 77, 184, 0.04)),
+        #111114;
       text-align: center;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        inset 0 -12px 18px rgba(0, 0, 0, 0.46),
+        0 9px 18px rgba(0, 0, 0, 0.28);
+    }
+
+    .stat::before {
+      content: "";
+      position: absolute;
+      left: 9px;
+      top: 9px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+      opacity: 0.82;
+    }
+
+    .stat::after {
+      content: "";
+      position: absolute;
+      right: 9px;
+      top: 9px;
+      width: 28px;
+      height: 5px;
+      background:
+        linear-gradient(90deg, var(--accent) 0 18%, transparent 18% 28%, var(--accent) 28% 46%, transparent 46% 56%, rgba(255, 77, 184, 0.9) 56% 74%, transparent 74%);
+      opacity: 0.42;
     }
 
     .stat span {
       display: block;
-      color: var(--muted);
+      color: rgba(205, 214, 215, 0.72);
       font-size: 10px;
       line-height: 1.2;
       text-transform: uppercase;
@@ -313,11 +415,12 @@
     .stat strong {
       display: block;
       margin-top: 4px;
-      color: var(--ink);
+      color: rgba(188, 255, 246, 0.94);
       font-size: clamp(19px, 4.8vw, 26px);
       font-weight: 400;
       line-height: 1;
       font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 12px rgba(0, 242, 255, 0.26);
     }
 
     #score-line {
@@ -330,11 +433,17 @@
       align-items: baseline;
       justify-content: center;
       gap: 14px;
-      padding: 7px 20px;
-      border: 1px solid rgba(255, 255, 255, 0.13);
-      border-radius: 999px;
-      background: rgba(8, 8, 10, 0.72);
-      box-shadow: 0 0 24px rgba(0, 0, 0, 0.42), 0 0 22px var(--accent-soft);
+      padding: 8px 22px 7px;
+      border: 1px solid rgba(0, 242, 255, 0.28);
+      border-radius: 6px;
+      background:
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 4px),
+        linear-gradient(180deg, rgba(0, 242, 255, 0.08), rgba(0, 0, 0, 0.68)),
+        var(--sampler-screen);
+      box-shadow:
+        inset 0 0 20px rgba(0, 242, 255, 0.1),
+        0 0 24px rgba(0, 0, 0, 0.48),
+        0 0 22px var(--accent-soft);
       transform: translate(-50%, calc(-50% - 25px));
       pointer-events: none;
     }
@@ -347,11 +456,12 @@
     }
 
     #score-line strong {
-      color: var(--ink);
+      color: rgba(188, 255, 246, 0.96);
       font-size: clamp(22px, 4.6vw, 32px);
       font-weight: 400;
       line-height: 1;
       font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 14px rgba(0, 242, 255, 0.34);
     }
 
     #analyze-target {
@@ -374,7 +484,13 @@
     }
 
     #analyze-target span {
-      font-size: 12px;
+      padding: 5px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 4px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(0, 0, 0, 0.46)),
+        rgba(9, 9, 10, 0.72);
+      font-size: 11px;
       line-height: 1.2;
       text-shadow: 0 0 18px rgba(0, 0, 0, 0.72);
     }
@@ -401,7 +517,7 @@
       padding: clamp(10px, min(3vw, 1.9vh), 18px);
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: rgba(255, 255, 255, 0.052);
+      background: url("assets/board-bg.png") center / 100% 100% no-repeat;
       box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
     }
 
@@ -445,6 +561,91 @@
         inset 0 -12px 18px rgba(0, 0, 0, 0.24);
     }
 
+    .cell[data-color="red"] {
+      border-color: transparent;
+      border-radius: 0;
+      background: url("assets/piece-red.png") center / contain no-repeat;
+      box-shadow: none;
+    }
+
+    .cell[data-color="red"]:hover:not(:disabled) {
+      box-shadow: 0 0 18px rgba(255, 77, 109, 0.32);
+    }
+
+    .cell[data-color="red"].selected {
+      box-shadow:
+        0 0 0 2px var(--accent),
+        0 0 24px var(--accent-soft);
+    }
+
+    .cell[data-color="yellow"] {
+      border-color: transparent;
+      border-radius: 0;
+      background: url("assets/piece-yellow.png") center / contain no-repeat;
+      box-shadow: none;
+    }
+
+    .cell[data-color="yellow"]:hover:not(:disabled) {
+      box-shadow: 0 0 18px rgba(255, 224, 102, 0.32);
+    }
+
+    .cell[data-color="yellow"].selected {
+      box-shadow:
+        0 0 0 2px var(--accent),
+        0 0 24px var(--accent-soft);
+    }
+
+    .cell[data-color="green"] {
+      border-color: transparent;
+      border-radius: 0;
+      background: url("assets/piece-green.png") center / contain no-repeat;
+      box-shadow: none;
+    }
+
+    .cell[data-color="green"]:hover:not(:disabled) {
+      box-shadow: 0 0 18px rgba(88, 255, 154, 0.32);
+    }
+
+    .cell[data-color="green"].selected {
+      box-shadow:
+        0 0 0 2px var(--accent),
+        0 0 24px var(--accent-soft);
+    }
+
+    .cell[data-color="blue"] {
+      border-color: transparent;
+      border-radius: 0;
+      background: url("assets/piece-blue.png") center / contain no-repeat;
+      box-shadow: none;
+    }
+
+    .cell[data-color="blue"]:hover:not(:disabled) {
+      box-shadow: 0 0 18px rgba(77, 141, 255, 0.32);
+    }
+
+    .cell[data-color="blue"].selected {
+      box-shadow:
+        0 0 0 2px var(--accent),
+        0 0 24px var(--accent-soft);
+    }
+
+    .cell[data-color="violet"] {
+      border-color: transparent;
+      border-radius: 0;
+      background: url("assets/piece-violet.png") center / contain no-repeat;
+      box-shadow: none;
+    }
+
+    .cell[data-color="violet"]:hover:not(:disabled) {
+      box-shadow: 0 0 18px rgba(199, 125, 255, 0.32);
+    }
+
+    .cell[data-color="violet"].selected {
+      box-shadow:
+        0 0 0 2px var(--accent),
+        0 0 24px var(--accent-soft);
+    }
+
     .cell.clear {
       animation: clear-pop 260ms ease forwards;
     }
@@ -461,9 +662,12 @@
       z-index: 8;
       min-width: 160px;
       padding: 10px 16px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 8px;
-      background: rgba(8, 8, 10, 0.86);
+      border: 1px solid rgba(0, 242, 255, 0.3);
+      border-radius: 6px;
+      background:
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 4px),
+        linear-gradient(180deg, rgba(0, 242, 255, 0.08), rgba(0, 0, 0, 0.72)),
+        var(--sampler-screen);
       color: var(--ink);
       text-align: center;
       font-size: clamp(24px, 7vw, 40px);
@@ -499,26 +703,36 @@
       min-height: 44px;
       border-radius: 8px;
       text-transform: uppercase;
-      transition: transform 160ms ease, background 160ms ease, color 160ms ease, border-color 160ms ease;
+      transition: transform 160ms ease, background 160ms ease, color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
     }
 
     .primary {
-      border: 1px solid var(--accent);
-      background: var(--accent);
+      border: 1px solid rgba(0, 242, 255, 0.44);
+      background:
+        linear-gradient(180deg, rgba(0, 242, 255, 0.92), rgba(0, 141, 156, 0.84));
       color: #050505;
       font-weight: 700;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.38),
+        0 8px 20px rgba(0, 0, 0, 0.34),
+        0 0 18px rgba(0, 242, 255, 0.14);
     }
 
     .settings-action {
       width: 100%;
       min-height: 42px;
-      border: 1px solid rgba(255, 255, 255, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.24);
       border-radius: 8px;
-      background: rgba(255, 255, 255, 0.04);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.075), transparent 44%),
+        #111114;
       color: var(--ink);
       font-weight: 700;
       text-transform: uppercase;
-      transition: transform 160ms ease, background 160ms ease, color 160ms ease, border-color 160ms ease;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        inset 0 -12px 20px rgba(0, 0, 0, 0.32);
+      transition: transform 160ms ease, background 160ms ease, color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
     }
 
     .primary:hover,
@@ -554,9 +768,10 @@
       display: grid;
       place-items: center;
       background:
-        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 5px),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 18px),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.022) 0 1px, transparent 1px 16px),
         radial-gradient(circle at center, rgba(0, 242, 255, 0.12), transparent 34%),
-        rgba(0, 0, 0, 0.82);
+        linear-gradient(180deg, rgba(12, 12, 14, 0.94), rgba(0, 0, 0, 0.9));
       color: var(--accent);
       overflow: hidden;
       opacity: 1;
@@ -576,14 +791,21 @@
       z-index: 2;
       min-width: min(420px, 78vw);
       min-height: 150px;
-      border: 1px solid rgba(0, 242, 255, 0.42);
+      border: 1px solid rgba(0, 242, 255, 0.5);
       border-radius: 8px;
-      background: rgba(0, 0, 0, 0.32);
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 35% 70%, rgba(255, 255, 255, 0.045)),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 5px),
+        rgba(0, 0, 0, 0.48);
       color: var(--accent);
       display: grid;
       place-items: center;
       pointer-events: auto;
-      box-shadow: 0 0 44px rgba(0, 242, 255, 0.16), inset 0 0 24px rgba(255, 77, 184, 0.08);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        inset 0 -18px 34px rgba(0, 0, 0, 0.44),
+        0 0 44px rgba(0, 242, 255, 0.16),
+        inset 0 0 24px rgba(255, 77, 184, 0.08);
       transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
     }
 
@@ -683,7 +905,9 @@
       display: none;
       place-items: center;
       padding: 24px;
-      background: rgba(0, 0, 0, 0.78);
+      background:
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.032) 0 1px, transparent 1px 5px),
+        rgba(0, 0, 0, 0.78);
       backdrop-filter: blur(10px);
     }
 
@@ -694,19 +918,26 @@
     #modal-content {
       width: min(390px, 100%);
       padding: 24px;
-      border: 1px solid var(--accent-soft);
+      border: 1px solid rgba(255, 255, 255, 0.18);
       border-radius: 8px;
-      background: #17171b;
-      box-shadow: 0 24px 88px rgba(0, 0, 0, 0.46);
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.07), transparent 34% 72%, rgba(255, 255, 255, 0.035)),
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.024) 0 1px, transparent 1px 8px),
+        #151518;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        inset 0 -18px 32px rgba(0, 0, 0, 0.38),
+        0 24px 88px rgba(0, 0, 0, 0.46);
     }
 
     #modal-content h2 {
       margin: 0 0 18px;
-      color: var(--accent);
+      color: rgba(188, 255, 246, 0.96);
       font-size: 24px;
       font-weight: 400;
       line-height: 1;
       text-transform: uppercase;
+      text-shadow: 0 0 14px rgba(0, 242, 255, 0.3);
     }
 
     .setting-row {
@@ -735,6 +966,7 @@
     input[type="range"] {
       width: 100%;
       accent-color: var(--accent);
+      filter: drop-shadow(0 0 8px rgba(0, 242, 255, 0.16));
     }
 
     input[type="checkbox"] {
@@ -899,7 +1131,7 @@
           <span>BPM</span>
           <strong id="bpm-val">60</strong>
         </label>
-        <input type="range" id="bpm-slider" min="60" max="180" value="60">
+        <input type="range" id="bpm-slider" min="60" max="180" value="60" step="10">
       </div>
       <div class="setting-row">
         <label for="diagonal-toggle">
@@ -929,13 +1161,14 @@
     const ANALYZE_BEATS = 4;
     const BPM_MIN = 60;
     const BPM_MAX = 180;
-    const SCORE_BPM_THRESHOLD = 10000;
-    const SCORE_BPM_INCREMENT = 20;
+    const SCORE_BPM_THRESHOLD = 5000;
+    const SCORE_BPM_INCREMENT = 10;
     const CHARACTER_SWAP_SCORE = 20000;
     const CHARACTER_FINAL_SWAP_SCORE = 30000;
     const CHARACTER_BASE_SRC = "assets/chara1.png";
     const CHARACTER_SCORE_SRC = "assets/chara1v2.png";
     const CHARACTER_FINAL_SRC = "assets/chara1-score30000.png";
+    const CHARACTER_MISS_SRC = "assets/chara-miss.png";
     const TARGETS = [3, 4, 5, 6];
     const COLORS = [
       { id: "red", value: "#ff4d6d" },
@@ -995,7 +1228,10 @@
     let sync = 0;
     let evolution = 0;
     let audioContext = null;
+    let musicMaster = null;
+    let noiseBuffer = null;
     let startSequenceActive = false;
+    let missImageTimer = 0;
 
     function randomItem(items) {
       return items[Math.floor(Math.random() * items.length)];
@@ -1040,6 +1276,7 @@
       if (count < targetNum) {
         markCluster(cluster, "reject");
         sync = Math.max(0, sync - 6);
+        flashMissCharacter();
         showFeedback(`NEED ${targetNum}`, "miss");
         playTone(120, 0.09, "sawtooth", 0.035);
         updateStats();
@@ -1159,6 +1396,7 @@
       if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
       }
+      setupMusicGraph();
       audioContext.resume();
     }
 
@@ -1223,6 +1461,7 @@
       beatReadout.textContent = "0/4";
       metroBar.style.setProperty("--meter", "0%");
       document.body.dataset.evolution = "0";
+      window.clearTimeout(missImageTimer);
       setBpm(BPM_MIN);
       setPhase("standby");
       startSequenceActive = false;
@@ -1295,7 +1534,7 @@
       }, 180);
 
       charContainer.style.setProperty("--beat", beatInCycle + 1);
-      playBeat(beatInCycle === 0 || beatInCycle === 4);
+      playBeat(beatInCycle);
     }
 
     function setBpm(nextBpm) {
@@ -1340,6 +1579,12 @@
       }
     }
 
+    function flashMissCharacter() {
+      window.clearTimeout(missImageTimer);
+      charImg.src = CHARACTER_MISS_SRC;
+      missImageTimer = window.setTimeout(updateCharacterImage, 420);
+    }
+
     function showFeedback(text, type) {
       feedback.textContent = text;
       feedback.className = "";
@@ -1349,9 +1594,275 @@
       }, 820);
     }
 
-    function playBeat(strong) {
-      if (!audioToggle.checked) return;
-      playTone(strong ? 660 : 330, 0.035, "triangle", strong ? 0.026 : 0.016);
+    function setupMusicGraph() {
+      if (musicMaster || !audioContext) return;
+
+      const compressor = audioContext.createDynamicsCompressor();
+      compressor.threshold.value = -18;
+      compressor.knee.value = 22;
+      compressor.ratio.value = 5;
+      compressor.attack.value = 0.004;
+      compressor.release.value = 0.18;
+
+      musicMaster = audioContext.createGain();
+      musicMaster.gain.value = 0.78;
+      musicMaster.connect(compressor);
+      compressor.connect(audioContext.destination);
+
+      noiseBuffer = audioContext.createBuffer(1, audioContext.sampleRate, audioContext.sampleRate);
+      const noise = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < noise.length; i += 1) {
+        noise[i] = Math.random() * 2 - 1;
+      }
+    }
+
+    function musicStage() {
+      return Math.min(12, Math.max(0, Math.floor((bpm - BPM_MIN) / SCORE_BPM_INCREMENT)));
+    }
+
+    function musicWidth(stage) {
+      return Math.min(0.92, 0.18 + stage * 0.06);
+    }
+
+    function routeAudio(node, pan = 0) {
+      const destination = musicMaster || audioContext.destination;
+      if (audioContext.createStereoPanner) {
+        const panner = audioContext.createStereoPanner();
+        panner.pan.value = Math.max(-1, Math.min(1, pan));
+        node.connect(panner);
+        panner.connect(destination);
+        return;
+      }
+
+      node.connect(destination);
+    }
+
+    function playBeat(beatInCycle) {
+      if (!audioContext || !audioToggle.checked) return;
+
+      const now = audioContext.currentTime;
+      const stage = musicStage();
+      const width = musicWidth(stage);
+      const beatSeconds = beatDuration / 1000;
+      const strong = beatInCycle === 0 || beatInCycle === 4;
+      const energy = stage / 12;
+
+      playKick(now, strong, stage);
+      playBass(now, beatInCycle, stage, beatSeconds);
+      playHat(now + beatSeconds * 0.5, 0.048, 0.018 + energy * 0.024, (beatInCycle % 2 ? -width : width));
+
+      if (stage >= 2 || beatInCycle % 2 === 1) {
+        playHat(now, 0.026, 0.01 + energy * 0.016, (beatInCycle % 2 ? width : -width) * 0.54);
+      }
+
+      if (stage >= 5) {
+        playHat(now + beatSeconds * 0.25, 0.018, 0.006 + energy * 0.012, width * 0.82);
+        playHat(now + beatSeconds * 0.75, 0.018, 0.006 + energy * 0.012, -width * 0.82);
+      }
+
+      if (beatInCycle === 2 || beatInCycle === 6) {
+        playClap(now, stage, width);
+      }
+
+      if (stage >= 2) {
+        playArp(now, beatInCycle, stage, beatSeconds, width);
+      }
+
+      if (stage >= 4 && strong) {
+        playChord(now, beatInCycle, stage, beatSeconds, width);
+      }
+
+      if (stage >= 7 && beatInCycle % 4 === 3) {
+        playSweep(now, stage, beatSeconds, width);
+      }
+    }
+
+    function playKick(time, strong, stage) {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      const energy = stage / 12;
+      const startFreq = strong ? 96 + stage * 2.2 : 82 + stage * 1.8;
+      const endFreq = strong ? 36 : 42;
+      const volume = strong ? 0.12 + energy * 0.075 : 0.092 + energy * 0.052;
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(startFreq, time);
+      osc.frequency.exponentialRampToValueAtTime(endFreq, time + 0.11);
+      gain.gain.setValueAtTime(volume, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.17);
+      osc.connect(gain);
+      routeAudio(gain);
+      osc.start(time);
+      osc.stop(time + 0.18);
+    }
+
+    function playBass(time, beatInCycle, stage, beatSeconds) {
+      const notes = [0, 0, 5, 0, 7, 7, 3, 10];
+      const energy = stage / 12;
+      const octaveLift = stage >= 8 && beatInCycle % 4 === 3 ? 12 : 0;
+      const frequency = 55 * (2 ** ((notes[beatInCycle] + octaveLift) / 12));
+      const osc = audioContext.createOscillator();
+      const filter = audioContext.createBiquadFilter();
+      const gain = audioContext.createGain();
+      const duration = Math.min(0.34, beatSeconds * 0.54);
+
+      osc.type = stage >= 3 ? "sawtooth" : "triangle";
+      osc.frequency.setValueAtTime(frequency, time);
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(260 + stage * 145, time);
+      filter.Q.value = 4 + energy * 7;
+      gain.gain.setValueAtTime(0.001, time);
+      gain.gain.exponentialRampToValueAtTime(0.046 + energy * 0.076, time + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+      osc.connect(filter);
+      filter.connect(gain);
+      routeAudio(gain);
+      osc.start(time);
+      osc.stop(time + duration + 0.02);
+    }
+
+    function playHat(time, duration, volume, pan) {
+      if (!noiseBuffer) return;
+
+      const source = audioContext.createBufferSource();
+      const filter = audioContext.createBiquadFilter();
+      const gain = audioContext.createGain();
+
+      source.buffer = noiseBuffer;
+      filter.type = "highpass";
+      filter.frequency.value = 5600 + musicStage() * 260;
+      gain.gain.setValueAtTime(volume, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+      source.connect(filter);
+      filter.connect(gain);
+      routeAudio(gain, pan);
+      source.start(time);
+      source.stop(time + duration);
+    }
+
+    function playClap(time, stage, width) {
+      const energy = stage / 12;
+      [0, 0.018, 0.038].forEach((offset, index) => {
+        if (!noiseBuffer) return;
+
+        const source = audioContext.createBufferSource();
+        const filter = audioContext.createBiquadFilter();
+        const gain = audioContext.createGain();
+        const start = time + offset;
+
+        source.buffer = noiseBuffer;
+        filter.type = "bandpass";
+        filter.frequency.value = 1350 + stage * 155;
+        filter.Q.value = 1.1;
+        gain.gain.setValueAtTime((0.026 + energy * 0.046) / (index + 1), start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.09);
+        source.connect(filter);
+        filter.connect(gain);
+        routeAudio(gain, index % 2 ? width * 0.45 : -width * 0.45);
+        source.start(start);
+        source.stop(start + 0.1);
+      });
+    }
+
+    function playArp(time, beatInCycle, stage, beatSeconds, width) {
+      const rangeLift = stage >= 6 ? 12 : stage >= 3 ? 7 : 0;
+      const sequence = [12, 19, 24, 27, 31, 27, 24, 19];
+      const pan = (beatInCycle % 2 ? 1 : -1) * width;
+      playPluck(time, sequence[beatInCycle] + rangeLift, stage, Math.min(0.16, beatSeconds * 0.32), pan);
+
+      if (stage >= 5) {
+        playPluck(
+          time + beatSeconds * 0.5,
+          sequence[(beatInCycle + 2) % sequence.length] + rangeLift,
+          stage,
+          Math.min(0.12, beatSeconds * 0.24),
+          -pan
+        );
+      }
+
+      if (stage >= 9) {
+        playPluck(
+          time + beatSeconds * 0.25,
+          sequence[(beatInCycle + 4) % sequence.length] + rangeLift + 12,
+          stage,
+          Math.min(0.08, beatSeconds * 0.18),
+          pan * 0.56
+        );
+      }
+    }
+
+    function playPluck(time, semitone, stage, duration, pan) {
+      const osc = audioContext.createOscillator();
+      const filter = audioContext.createBiquadFilter();
+      const gain = audioContext.createGain();
+      const energy = stage / 12;
+      const frequency = 110 * (2 ** (semitone / 12));
+
+      osc.type = stage >= 6 ? "square" : "sawtooth";
+      osc.frequency.setValueAtTime(frequency, time);
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(1200 + stage * 340, time);
+      filter.Q.value = 4.8 + energy * 4;
+      gain.gain.setValueAtTime(0.001, time);
+      gain.gain.exponentialRampToValueAtTime(0.014 + energy * 0.042, time + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+      osc.connect(filter);
+      filter.connect(gain);
+      routeAudio(gain, pan);
+      osc.start(time);
+      osc.stop(time + duration + 0.02);
+    }
+
+    function playChord(time, beatInCycle, stage, beatSeconds, width) {
+      const energy = stage / 12;
+      const chord = beatInCycle === 0 ? [0, 7, 12, 19] : [5, 12, 17, 24];
+      const duration = Math.min(0.92, beatSeconds * 1.72);
+
+      chord.forEach((semitone, index) => {
+        const osc = audioContext.createOscillator();
+        const filter = audioContext.createBiquadFilter();
+        const gain = audioContext.createGain();
+        const frequency = 110 * (2 ** (semitone / 12));
+        const pan = ((index - 1.5) / 1.5) * width;
+
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(frequency, time);
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(980 + stage * 290, time);
+        filter.Q.value = 1.15 + energy * 1.4;
+        gain.gain.setValueAtTime(0.001, time);
+        gain.gain.exponentialRampToValueAtTime(0.012 + energy * 0.03, time + 0.045);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+        osc.connect(filter);
+        filter.connect(gain);
+        routeAudio(gain, pan);
+        osc.start(time);
+        osc.stop(time + duration + 0.04);
+      });
+    }
+
+    function playSweep(time, stage, beatSeconds, width) {
+      if (!noiseBuffer) return;
+
+      const source = audioContext.createBufferSource();
+      const filter = audioContext.createBiquadFilter();
+      const gain = audioContext.createGain();
+      const energy = stage / 12;
+      const duration = Math.min(0.34, beatSeconds * 0.68);
+
+      source.buffer = noiseBuffer;
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(520 + stage * 110, time);
+      filter.frequency.exponentialRampToValueAtTime(5200 + stage * 470, time + duration);
+      filter.Q.value = 8;
+      gain.gain.setValueAtTime(0.001, time);
+      gain.gain.exponentialRampToValueAtTime(0.018 + energy * 0.04, time + duration * 0.46);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+      source.connect(filter);
+      filter.connect(gain);
+      routeAudio(gain, (Math.random() > 0.5 ? 1 : -1) * width);
+      source.start(time);
+      source.stop(time + duration);
     }
 
     function playTone(frequency, duration, type, volume) {
@@ -1364,7 +1875,7 @@
       gain.gain.setValueAtTime(volume, audioContext.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
       osc.connect(gain);
-      gain.connect(audioContext.destination);
+      routeAudio(gain);
       osc.start();
       osc.stop(audioContext.currentTime + duration);
     }
