@@ -58,10 +58,6 @@
       animation: char-beat-bounce 180ms cubic-bezier(0.2, 0.82, 0.26, 1) both;
     }
 
-    body[data-pulse="1"] #score-line strong {
-      animation: score-beat-bounce 180ms cubic-bezier(0.2, 0.82, 0.26, 1) both;
-    }
-
     body[data-pulse="1"] #sound-wave .wave-row {
       opacity: calc(var(--o) + 0.34);
       transform: translate(-50%, -50%) scaleY(1.18);
@@ -528,32 +524,43 @@
 
     #score-line {
       position: absolute;
-      inset: 0;
-      z-index: 0;
-      display: grid;
-      place-items: center;
+      left: 50%;
+      bottom: clamp(6px, 1.6vh, 14px);
+      z-index: 4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      width: min(360px, 76vw);
       padding: 0;
       pointer-events: none;
-      mix-blend-mode: screen;
-      opacity: 0.36;
+      mix-blend-mode: normal;
+      opacity: 1;
+      transform: translateX(-50%);
     }
 
     #score-line span {
-      display: none;
+      display: block;
+      color: rgba(255, 255, 255, 0.58);
+      font-size: 10px;
+      line-height: 1;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      text-shadow: 0 0 14px rgba(0, 0, 0, 0.86);
     }
 
     #score-line strong {
-      color: rgba(188, 255, 246, 0.9);
-      font-size: clamp(118px, 26vw, 238px);
+      color: rgba(188, 255, 246, 0.98);
+      font-size: clamp(34px, 8vw, 56px);
       font-weight: 700;
-      line-height: 0.78;
+      line-height: 0.82;
       font-variant-numeric: tabular-nums;
       text-align: center;
       text-shadow:
-        0 0 20px rgba(0, 242, 255, 0.54),
-        0 0 64px rgba(255, 77, 184, 0.28);
-      transform: translateY(0) scale(1);
-      will-change: transform;
+        0 0 12px rgba(0, 242, 255, 0.74),
+        0 0 30px rgba(255, 77, 184, 0.36),
+        0 4px 18px rgba(0, 0, 0, 0.92);
     }
 
     #analyze-target {
@@ -1518,12 +1525,6 @@
       100% { transform: translate3d(0, 26px, 0) scale(1.5); }
     }
 
-    @keyframes score-beat-bounce {
-      0% { transform: translateY(0) scale(1); }
-      42% { transform: translateY(-18px) scale(1.025); }
-      100% { transform: translateY(0) scale(1); }
-    }
-
     @keyframes wave-scroll {
       0% { background-position: 0 0, 0 0; }
       100% { background-position: 132px 0, 0 0; }
@@ -1807,6 +1808,7 @@
     let evolution = 0;
     let audioContext = null;
     let musicMaster = null;
+    let musicOutput = null;
     let noiseBuffer = null;
     let startSequenceActive = false;
     let resultActive = false;
@@ -2475,22 +2477,26 @@
       if (musicMaster || !audioContext) return;
 
       const compressor = audioContext.createDynamicsCompressor();
-      compressor.threshold.value = -18;
-      compressor.knee.value = 22;
-      compressor.ratio.value = 5;
+      compressor.threshold.value = -10;
+      compressor.knee.value = 16;
+      compressor.ratio.value = 3;
       compressor.attack.value = 0.004;
-      compressor.release.value = 0.18;
+      compressor.release.value = 0.12;
 
       musicMaster = audioContext.createGain();
-      musicMaster.gain.value = 0.78;
+      musicMaster.gain.value = 8;
+      musicOutput = audioContext.createGain();
+      musicOutput.gain.value = 3;
       musicMaster.connect(compressor);
-      compressor.connect(audioContext.destination);
+      compressor.connect(musicOutput);
+      musicOutput.connect(audioContext.destination);
 
       noiseBuffer = audioContext.createBuffer(1, audioContext.sampleRate, audioContext.sampleRate);
       const noise = noiseBuffer.getChannelData(0);
       for (let i = 0; i < noise.length; i += 1) {
         noise[i] = Math.random() * 2 - 1;
       }
+
     }
 
     function musicStage() {
