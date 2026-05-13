@@ -58,6 +58,10 @@
       animation: char-beat-bounce 180ms cubic-bezier(0.2, 0.82, 0.26, 1) both;
     }
 
+    body[data-pulse="1"] #score-line strong {
+      animation: score-beat-bounce 180ms cubic-bezier(0.2, 0.82, 0.26, 1) both;
+    }
+
     body[data-pulse="1"] #sound-wave .wave-row {
       opacity: calc(var(--o) + 0.34);
       transform: translate(-50%, -50%) scaleY(1.18);
@@ -78,6 +82,14 @@
     body[data-evolution="1"] { --accent: #ff4db8; --accent-soft: rgba(255, 77, 184, 0.24); }
     body[data-evolution="2"] { --accent: #58ff9a; --accent-soft: rgba(88, 255, 154, 0.22); }
     body[data-evolution="3"] { --accent: #ffe066; --accent-soft: rgba(255, 224, 102, 0.2); }
+
+    body[data-miss-danger="1"] #miss-danger-vignette {
+      opacity: var(--miss-danger-opacity, 0.34);
+    }
+
+    body[data-pulse="1"][data-miss-danger="1"] #miss-danger-vignette {
+      animation: miss-danger-beat 300ms ease-out both;
+    }
 
     button,
     input {
@@ -119,6 +131,34 @@
       color: var(--accent);
       outline: none;
       transform: rotate(18deg);
+    }
+
+    #soul-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 18;
+      overflow: hidden;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    #miss-danger-vignette {
+      position: fixed;
+      inset: -5vmax;
+      z-index: 17;
+      pointer-events: none;
+      opacity: 0;
+      border-radius: 6vmax;
+      background:
+        radial-gradient(ellipse at center, transparent 0 52%, rgba(255, 53, 83, 0.1) 62%, rgba(255, 38, 68, 0.34) 82%, rgba(255, 0, 46, 0.62) 100%);
+      box-shadow:
+        inset 0 0 46px rgba(255, 0, 46, 0.38),
+        inset 0 0 96px rgba(255, 47, 82, 0.34);
+      filter: blur(16px) saturate(1.18);
+      transform: scale(1);
+      transition: opacity 320ms ease, filter 320ms ease;
+      mix-blend-mode: screen;
+      will-change: opacity, transform, filter;
     }
 
     #top-area {
@@ -181,6 +221,7 @@
     }
 
     #phase-text {
+      display: none;
       min-height: 16px;
       min-width: min(220px, 62vw);
       padding: 6px 14px 5px;
@@ -196,30 +237,6 @@
       box-shadow:
         inset 0 0 18px rgba(0, 242, 255, 0.12),
         0 0 18px rgba(0, 0, 0, 0.42);
-    }
-
-    #metronome {
-      width: min(240px, 64vw);
-      height: 10px;
-      padding: 2px;
-      overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 3px;
-      background:
-        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.16) 0 1px, transparent 1px 12.5%),
-        rgba(0, 0, 0, 0.58);
-      box-shadow:
-        inset 0 0 0 1px rgba(0, 0, 0, 0.72),
-        0 0 18px rgba(0, 242, 255, 0.1);
-    }
-
-    #metronome-bar {
-      width: var(--meter, 0%);
-      height: 100%;
-      border-radius: 2px;
-      background:
-        linear-gradient(90deg, rgba(0, 242, 255, 0.92), var(--accent), rgba(255, 77, 184, 0.86));
-      box-shadow: 0 0 18px var(--accent);
     }
 
     #sound-wave {
@@ -276,7 +293,7 @@
 
     #char-container {
       position: relative;
-      z-index: 0;
+      z-index: 2;
       width: min(66vw, 360px);
       max-height: 100%;
       display: grid;
@@ -296,6 +313,10 @@
       filter:
         drop-shadow(0 0 9px rgba(255, 77, 184, 0.34))
         drop-shadow(0 0 18px var(--accent-soft));
+    }
+
+    #char-container.absorbing #char-img {
+      animation: char-absorb-glow 360ms ease-out both;
     }
 
     #bottom-area {
@@ -423,45 +444,116 @@
       text-shadow: 0 0 12px rgba(0, 242, 255, 0.26);
     }
 
+    .sound-stat {
+      display: grid;
+      place-items: center;
+      min-height: 56px;
+      padding-inline: 9px;
+    }
+
+    .sound-wave-icon {
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      gap: 4px;
+      width: 100%;
+      height: 32px;
+      --bass-hit: 1.04;
+      --bass-opacity: 0.9;
+    }
+
+    .sound-wave-icon span {
+      width: 6px;
+      height: var(--wave-h);
+      min-height: 8px;
+      background:
+        repeating-linear-gradient(
+          to top,
+          var(--accent) 0 5px,
+          transparent 5px 8px
+        );
+      filter: drop-shadow(0 0 8px var(--accent-soft));
+      opacity: 0.42;
+      transform-origin: bottom;
+      transform: scaleY(0.34);
+    }
+
+    body[data-bass="strong"] .sound-wave-icon {
+      --bass-hit: 1.22;
+      --bass-opacity: 1;
+    }
+
+    body[data-pulse="1"] .sound-wave-icon span {
+      animation: bgm-bass-hit 240ms cubic-bezier(0.18, 0.82, 0.2, 1) both;
+    }
+
+    .sound-wave-icon span:nth-child(1) { --wave-h: 18px; animation-delay: 18ms; }
+    .sound-wave-icon span:nth-child(2) { --wave-h: 28px; animation-delay: 8ms; }
+    .sound-wave-icon span:nth-child(3) { --wave-h: 14px; animation-delay: 28ms; }
+    .sound-wave-icon span:nth-child(4) { --wave-h: 32px; animation-delay: 0ms; }
+    .sound-wave-icon span:nth-child(5) { --wave-h: 22px; animation-delay: 14ms; }
+
+    .beat-dots {
+      display: flex;
+      justify-content: center;
+      gap: 9px;
+      margin-top: 7px;
+    }
+
+    .beat-dots span {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: rgba(188, 255, 246, 0.15);
+      border: 1px solid rgba(188, 255, 246, 0.26);
+      box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.42);
+      transition: background 80ms ease, box-shadow 80ms ease, transform 80ms ease, opacity 80ms ease;
+      opacity: 0.52;
+    }
+
+    .beat-dots[data-beat="0"] span:nth-child(1),
+    .beat-dots[data-beat="1"] span:nth-child(2),
+    .beat-dots[data-beat="2"] span:nth-child(3),
+    .beat-dots[data-beat="3"] span:nth-child(4) {
+      background: var(--accent);
+      border-color: rgba(255, 255, 255, 0.72);
+      box-shadow:
+        0 0 12px var(--accent),
+        0 0 26px var(--accent-soft),
+        inset 0 0 8px rgba(255, 255, 255, 0.35);
+      opacity: 1;
+      transform: scale(1.18);
+      animation: beat-dot-flash 220ms ease-out both;
+    }
+
     #score-line {
       position: absolute;
-      top: var(--top-area-height);
-      left: 50%;
-      z-index: 10;
-      min-width: min(260px, 62vw);
-      display: flex;
-      align-items: baseline;
-      justify-content: center;
-      gap: 14px;
-      padding: 8px 22px 7px;
-      border: 1px solid rgba(0, 242, 255, 0.28);
-      border-radius: 6px;
-      background:
-        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 4px),
-        linear-gradient(180deg, rgba(0, 242, 255, 0.08), rgba(0, 0, 0, 0.68)),
-        var(--sampler-screen);
-      box-shadow:
-        inset 0 0 20px rgba(0, 242, 255, 0.1),
-        0 0 24px rgba(0, 0, 0, 0.48),
-        0 0 22px var(--accent-soft);
-      transform: translate(-50%, calc(-50% - 25px));
+      inset: 0;
+      z-index: 0;
+      display: grid;
+      place-items: center;
+      padding: 0;
       pointer-events: none;
+      mix-blend-mode: screen;
+      opacity: 0.36;
     }
 
     #score-line span {
-      color: var(--muted);
-      font-size: 10px;
-      line-height: 1;
-      text-transform: uppercase;
+      display: none;
     }
 
     #score-line strong {
-      color: rgba(188, 255, 246, 0.96);
-      font-size: clamp(22px, 4.6vw, 32px);
-      font-weight: 400;
-      line-height: 1;
+      color: rgba(188, 255, 246, 0.9);
+      font-size: clamp(118px, 26vw, 238px);
+      font-weight: 700;
+      line-height: 0.78;
       font-variant-numeric: tabular-nums;
-      text-shadow: 0 0 14px rgba(0, 242, 255, 0.34);
+      text-align: center;
+      text-shadow:
+        0 0 20px rgba(0, 242, 255, 0.54),
+        0 0 64px rgba(255, 77, 184, 0.28);
+      transform: translateY(0) scale(1);
+      will-change: transform;
     }
 
     #analyze-target {
@@ -484,12 +576,6 @@
     }
 
     #analyze-target span {
-      padding: 5px 12px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 4px;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(0, 0, 0, 0.46)),
-        rgba(9, 9, 10, 0.72);
       font-size: 11px;
       line-height: 1.2;
       text-shadow: 0 0 18px rgba(0, 0, 0, 0.72);
@@ -633,6 +719,10 @@
 
     .cell:disabled {
       cursor: default;
+    }
+
+    body[data-phase="analyze"] .cell:disabled,
+    body[data-phase="standby"] .cell:disabled {
       opacity: 0.48;
     }
 
@@ -735,6 +825,49 @@
     .cell.reject {
       animation: reject 240ms ease;
       filter: grayscale(0.2) brightness(0.82);
+    }
+
+    .soul-particle {
+      position: absolute;
+      left: var(--sx);
+      top: var(--sy);
+      width: var(--soul-size, 12px);
+      height: var(--soul-size, 12px);
+      border-radius: 50%;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 38% 32%, #fff 0 14%, var(--soul-color) 15% 48%, transparent 72%);
+      box-shadow:
+        0 0 12px var(--soul-color),
+        0 0 28px var(--soul-color),
+        0 0 54px rgba(255, 255, 255, 0.26);
+      mix-blend-mode: screen;
+      transform: translate(-50%, -50%);
+      will-change: transform, opacity, filter;
+      animation: soul-absorb var(--soul-speed, 520ms) cubic-bezier(0.15, 0.82, 0.16, 1) var(--soul-delay, 0ms) forwards;
+    }
+
+    .soul-particle::before {
+      content: "";
+      position: absolute;
+      inset: -14px -26px;
+      border-radius: 999px;
+      background:
+        radial-gradient(ellipse at 70% 50%, rgba(255, 255, 255, 0.64), transparent 0 16%),
+        linear-gradient(90deg, transparent, var(--soul-color), rgba(255, 255, 255, 0.72), transparent);
+      opacity: 0.5;
+      filter: blur(5px);
+      transform: rotate(var(--soul-tilt, -18deg));
+    }
+
+    .soul-particle::after {
+      content: "";
+      position: absolute;
+      inset: -7px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      opacity: 0.65;
+      animation: soul-ring 520ms ease-out forwards;
     }
 
     #feedback {
@@ -1255,6 +1388,103 @@
       100% { opacity: 0; transform: scale(0.08); }
     }
 
+    @keyframes beat-dot-flash {
+      0% { transform: scale(0.72); filter: brightness(2.2); }
+      48% { transform: scale(1.26); filter: brightness(1.65); }
+      100% { transform: scale(1.18); filter: brightness(1); }
+    }
+
+    @keyframes bgm-bass-hit {
+      0% {
+        transform: scaleY(0.32);
+        opacity: 0.42;
+      }
+
+      36% {
+        transform: scaleY(var(--bass-hit));
+        opacity: var(--bass-opacity);
+        filter:
+          drop-shadow(0 0 8px var(--accent-soft))
+          drop-shadow(0 0 14px var(--accent));
+      }
+
+      100% {
+        transform: scaleY(0.42);
+        opacity: 0.5;
+      }
+    }
+
+    @keyframes miss-danger-beat {
+      0% {
+        transform: scale(1);
+        opacity: var(--miss-danger-opacity, 0.34);
+        filter: blur(18px) saturate(1.12);
+      }
+
+      42% {
+        transform: scale(var(--miss-danger-scale, 1.045));
+        opacity: calc(var(--miss-danger-opacity, 0.34) + 0.12);
+        filter: blur(20px) saturate(1.45);
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: var(--miss-danger-opacity, 0.34);
+        filter: blur(16px) saturate(1.18);
+      }
+    }
+
+    @keyframes soul-absorb {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(0.42);
+        filter: brightness(1.8) blur(0.2px);
+      }
+
+      16% {
+        opacity: 1;
+        transform: translate(-50%, -50%) translate3d(0, -10px, 0) scale(1.05);
+        filter: brightness(2) blur(0);
+      }
+
+      64% {
+        opacity: 0.95;
+        transform: translate(-50%, -50%) translate3d(var(--mx), var(--my), 0) scale(0.72);
+      }
+
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) translate3d(var(--tx), var(--ty), 0) scale(0.12);
+        filter: brightness(2.5) blur(1.6px);
+      }
+    }
+
+    @keyframes soul-ring {
+      0% { transform: scale(0.3); opacity: 0.75; }
+      100% { transform: scale(2.6); opacity: 0; }
+    }
+
+    @keyframes char-absorb-glow {
+      0% {
+        filter:
+          drop-shadow(0 0 9px rgba(255, 77, 184, 0.34))
+          drop-shadow(0 0 18px var(--accent-soft));
+      }
+
+      42% {
+        filter:
+          drop-shadow(0 0 16px rgba(255, 255, 255, 0.52))
+          drop-shadow(0 0 32px var(--accent))
+          drop-shadow(0 0 48px rgba(255, 77, 184, 0.36));
+      }
+
+      100% {
+        filter:
+          drop-shadow(0 0 9px rgba(255, 77, 184, 0.34))
+          drop-shadow(0 0 18px var(--accent-soft));
+      }
+    }
+
     @keyframes reject {
       0%, 100% { transform: translateX(0); }
       28% { transform: translateX(-5px); }
@@ -1286,6 +1516,12 @@
       0% { transform: translate3d(0, 26px, 0) scale(1.5); }
       42% { transform: translate3d(0, 16px, 0) scale(1.515); }
       100% { transform: translate3d(0, 26px, 0) scale(1.5); }
+    }
+
+    @keyframes score-beat-bounce {
+      0% { transform: translateY(0) scale(1); }
+      42% { transform: translateY(-18px) scale(1.025); }
+      100% { transform: translateY(0) scale(1); }
     }
 
     @keyframes wave-scroll {
@@ -1371,18 +1607,19 @@
     }
   </style>
 </head>
-<body data-phase="standby" data-evolution="0" data-pulse="0">
+<body data-phase="standby" data-evolution="0" data-pulse="0" data-beat="0" data-bass="normal" data-miss-danger="0">
   <button id="settings-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
   <div class="start-gate" id="start-gate">
     <button class="start-button" id="start-btn" type="button" aria-label="Start">
       <span class="glitch-text" id="start-text" data-text="START">START</span>
     </button>
   </div>
+  <div id="soul-layer" aria-hidden="true"></div>
+  <div id="miss-danger-vignette" aria-hidden="true"></div>
 
   <section id="top-area" aria-label="Character sync stage">
     <div id="status-overlay" aria-live="polite">
       <div id="phase-text">STANDBY</div>
-      <div id="metronome" aria-label="Beat meter"><div id="metronome-bar"></div></div>
     </div>
     <div id="sound-wave" aria-hidden="true">
       <span class="wave-row"></span>
@@ -1391,25 +1628,34 @@
       <span class="wave-row"></span>
       <span class="wave-row"></span>
     </div>
+    <div id="score-line" aria-live="polite">
+      <span>Score</span>
+      <strong id="score-readout">0</strong>
+    </div>
     <div id="char-container">
       <img id="char-img" src="assets/chara1.png" alt="RE:CORD character">
     </div>
   </section>
 
-  <div id="score-line" aria-live="polite">
-    <span>Score</span>
-    <strong id="score-readout">0</strong>
-  </div>
-
   <section id="bottom-area" aria-label="Puzzle board">
     <div class="stats-bar">
-      <div class="stat">
-        <span>BPM</span>
-        <strong id="bpm-readout">60</strong>
+      <div class="stat sound-stat" role="img" aria-label="BGM sound wave">
+        <div class="sound-wave-icon" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
       </div>
       <div class="stat">
         <span>Beat</span>
-        <strong id="beat-readout">0/4</strong>
+        <div class="beat-dots" id="beat-readout" data-beat="none" aria-label="Beat">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
       </div>
     </div>
 
@@ -1443,12 +1689,6 @@
           <strong id="bpm-val">60</strong>
         </label>
         <input type="range" id="bpm-slider" min="60" max="180" value="60" step="10">
-      </div>
-      <div class="setting-row">
-        <label for="diagonal-toggle">
-          <span>Diagonal Link</span>
-          <input type="checkbox" id="diagonal-toggle" checked>
-        </label>
       </div>
       <div class="setting-row">
         <label for="audio-toggle">
@@ -1486,8 +1726,8 @@
 
   <script>
     const SIZE = 6;
-    const CYCLE_BEATS = 8;
-    const ANALYZE_BEATS = 4;
+    const CYCLE_BEATS = 4;
+    const ANALYZE_BEATS = 2;
     const MAX_MISSES = 5;
     const TIME_LIMIT_MS = 120000;
     const RESULT_COUNT_MS = 1500;
@@ -1497,11 +1737,13 @@
     const SCORE_BPM_INCREMENT = 10;
     const CHARACTER_SWAP_SCORE = 20000;
     const CHARACTER_FINAL_SWAP_SCORE = 30000;
+    const CHARACTER_SCORE_45000 = 45000;
     const CHARACTER_BASE_SRC = "assets/chara1.png";
     const CHARACTER_SCORE_SRC = "assets/chara1v2.png";
     const CHARACTER_FINAL_SRC = "assets/chara1-score30000.png";
+    const CHARACTER_SCORE_45000_SRC = "assets/chara1-score45000.png";
     const CHARACTER_MISS_SRC = "assets/chara-miss.png";
-    const TARGETS = [3, 4, 5, 6];
+    const TARGETS = [2, 3, 4, 5];
     const COLORS = [
       { id: "red", value: "#ff4d6d" },
       { id: "green", value: "#58ff9a" },
@@ -1515,13 +1757,6 @@
       [0, 1],
       [1, 0]
     ];
-    const DIAGONAL_DIRS = [
-      [-1, -1],
-      [-1, 1],
-      [1, -1],
-      [1, 1]
-    ];
-
     const grid = document.getElementById("grid");
     const charContainer = document.getElementById("char-container");
     const charImg = document.getElementById("char-img");
@@ -1534,15 +1769,13 @@
     const closeSettings = document.getElementById("close-settings");
     const bpmSlider = document.getElementById("bpm-slider");
     const bpmVal = document.getElementById("bpm-val");
-    const bpmReadout = document.getElementById("bpm-readout");
-    const diagonalToggle = document.getElementById("diagonal-toggle");
     const audioToggle = document.getElementById("audio-toggle");
     const targetDisplay = document.getElementById("target-num");
     const phaseText = document.getElementById("phase-text");
-    const metroBar = document.getElementById("metronome-bar");
     const feedback = document.getElementById("feedback");
     const beatReadout = document.getElementById("beat-readout");
     const scoreReadout = document.getElementById("score-readout");
+    const soulLayer = document.getElementById("soul-layer");
     const missGauge = document.getElementById("miss-gauge");
     const missGaugeSegments = Array.from(document.querySelectorAll(".miss-gauge-segment"));
     const timeGauge = document.getElementById("time-gauge");
@@ -1590,6 +1823,8 @@
         Array.from({ length: SIZE }, () => randomItem(COLORS).id)
       ));
       ensurePlayableGroup(targetNum);
+      targetNum = choosePlayableTarget();
+      targetDisplay.textContent = targetNum;
       renderGrid();
     }
 
@@ -1638,6 +1873,7 @@
       updateGridLock();
       markCluster(cluster, "selected");
       markCluster(cluster, "clear");
+      launchSoulAbsorb(cluster, event.currentTarget);
 
       if (count === targetNum) {
         score += 1000;
@@ -1672,9 +1908,69 @@
       }, 270);
     }
 
+    function launchSoulAbsorb(cluster, sourceCell) {
+      if (!soulLayer) return;
+
+      const targetRect = charImg.getBoundingClientRect();
+      const targetX = targetRect.left + targetRect.width * 0.52;
+      const targetY = targetRect.top + targetRect.height * 0.42;
+      const maxParticles = 14;
+      const stride = Math.max(1, Math.ceil(cluster.length / maxParticles));
+      let spawned = 0;
+
+      charContainer.classList.remove("absorbing");
+      void charContainer.offsetWidth;
+      charContainer.classList.add("absorbing");
+      window.setTimeout(() => {
+        charContainer.classList.remove("absorbing");
+      }, 380);
+
+      cluster.forEach(({ row, col }, index) => {
+        if (index % stride !== 0) return;
+
+        const cell = grid.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+        if (!cell) return;
+
+        spawnSoulParticle(cell, targetX, targetY, index, cluster.length);
+        spawned += 1;
+      });
+
+      if (spawned === 0 && sourceCell) {
+        spawnSoulParticle(sourceCell, targetX, targetY, 0, 1);
+      }
+    }
+
+    function spawnSoulParticle(cell, targetX, targetY, index, total) {
+      const rect = cell.getBoundingClientRect();
+      const startX = rect.left + rect.width * 0.5;
+      const startY = rect.top + rect.height * 0.5;
+      const color = COLORS.find((item) => item.id === cell.dataset.color) || COLORS[0];
+      const drift = (index - (total - 1) / 2) * 7;
+      const midX = (targetX - startX) * 0.48 + drift;
+      const midY = (targetY - startY) * 0.42 - 34 - (index % 3) * 8;
+      const particle = document.createElement("span");
+
+      particle.className = "soul-particle";
+      particle.setAttribute("aria-hidden", "true");
+      particle.style.setProperty("--sx", `${startX}px`);
+      particle.style.setProperty("--sy", `${startY}px`);
+      particle.style.setProperty("--tx", `${targetX - startX}px`);
+      particle.style.setProperty("--ty", `${targetY - startY}px`);
+      particle.style.setProperty("--mx", `${midX}px`);
+      particle.style.setProperty("--my", `${midY}px`);
+      particle.style.setProperty("--soul-color", color.value);
+      particle.style.setProperty("--soul-size", `${9 + (index % 3) * 2}px`);
+      particle.style.setProperty("--soul-delay", `${Math.min(index, 14) * 18}ms`);
+      particle.style.setProperty("--soul-speed", `${460 + (index % 4) * 34}ms`);
+      particle.style.setProperty("--soul-tilt", `${-28 + (index % 5) * 12}deg`);
+      soulLayer.appendChild(particle);
+      soulLayer.dataset.spawned = String(Number(soulLayer.dataset.spawned || 0) + 1);
+      window.setTimeout(() => particle.remove(), 820);
+    }
+
     function findCluster(startRow, startCol) {
       const color = board[startRow][startCol];
-      const dirs = diagonalToggle.checked ? CARDINAL_DIRS.concat(DIAGONAL_DIRS) : CARDINAL_DIRS;
+      const dirs = CARDINAL_DIRS;
       const stack = [[startRow, startCol]];
       const visited = new Set();
       const cluster = [];
@@ -1709,10 +2005,16 @@
     }
 
     function updateMissGauge() {
+      const danger = Math.max(0, missCount - 2);
+      const dangerOpacity = danger > 0 ? 0.18 + danger * 0.15 : 0;
+
       missGauge.setAttribute("aria-valuenow", String(missCount));
       missGaugeSegments.forEach((segment, index) => {
         segment.classList.toggle("active", index >= MAX_MISSES - missCount);
       });
+      document.body.dataset.missDanger = danger > 0 ? "1" : "0";
+      document.body.style.setProperty("--miss-danger-opacity", String(dangerOpacity));
+      document.body.style.setProperty("--miss-danger-scale", String(1 + danger * 0.022));
     }
 
     function updateTimeGauge() {
@@ -1870,14 +2172,39 @@
       return largest;
     }
 
+    function choosePlayableTarget() {
+      const largest = largestGroupSize();
+      const candidates = TARGETS.filter((target) => target <= largest);
+
+      if (candidates.length) {
+        return randomItem(candidates);
+      }
+
+      ensurePlayableGroup(TARGETS[0]);
+      return TARGETS[0];
+    }
+
     function ensurePlayableGroup(target) {
       if (largestGroupSize() >= target) return;
+
       const color = randomItem(COLORS).id;
-      const row = Math.floor(Math.random() * SIZE);
-      const col = Math.floor(Math.random() * (SIZE - target + 1));
+      const horizontal = Math.random() > 0.5;
+      const row = horizontal
+        ? Math.floor(Math.random() * SIZE)
+        : Math.floor(Math.random() * (SIZE - target + 1));
+      const col = horizontal
+        ? Math.floor(Math.random() * (SIZE - target + 1))
+        : Math.floor(Math.random() * SIZE);
 
       for (let offset = 0; offset < target; offset += 1) {
-        board[row][col + offset] = color;
+        const nextRow = horizontal ? row : row + offset;
+        const nextCol = horizontal ? col + offset : col;
+
+        board[nextRow][nextCol] = color;
+      }
+
+      if (largestGroupSize() < target) {
+        ensurePlayableGroup(target);
       }
     }
 
@@ -1961,8 +2288,7 @@
       resultActive = false;
       targetNum = 3;
       targetDisplay.textContent = "--";
-      beatReadout.textContent = "0/4";
-      metroBar.style.setProperty("--meter", "0%");
+      updateBeatDisplay(null);
       document.body.dataset.evolution = "0";
       startBtn.setAttribute("aria-label", "Start");
       setBpm(BPM_MIN);
@@ -1987,8 +2313,7 @@
       lastCycle = -1;
       targetNum = 3;
       targetDisplay.textContent = "--";
-      beatReadout.textContent = "0/4";
-      metroBar.style.setProperty("--meter", "0%");
+      updateBeatDisplay(null);
       document.body.dataset.evolution = "0";
       window.clearTimeout(missImageTimer);
       closeResultOverlay();
@@ -2014,7 +2339,6 @@
       const beatInCycle = totalBeat % CYCLE_BEATS;
       const cycle = Math.floor(totalBeat / CYCLE_BEATS);
       const phase = beatInCycle < ANALYZE_BEATS ? "analyze" : "execute";
-      const beatProgress = beatPosition - totalBeat;
       remainingTimeMs = Math.max(0, TIME_LIMIT_MS - (now - timeStartedAt));
       updateTimeGauge();
 
@@ -2025,10 +2349,8 @@
 
       if (cycle !== lastCycle) {
         lastCycle = cycle;
-        targetNum = randomItem(TARGETS);
+        targetNum = choosePlayableTarget();
         targetDisplay.textContent = targetNum;
-        ensurePlayableGroup(targetNum);
-        renderGrid();
       }
 
       if (phase !== currentPhase) {
@@ -2038,11 +2360,22 @@
       if (totalBeat !== lastBeat) {
         lastBeat = totalBeat;
         pulseBeat(beatInCycle);
+        updateBeatDisplay(beatInCycle);
       }
 
-      metroBar.style.setProperty("--meter", `${Math.min(100, beatProgress * 100)}%`);
-      beatReadout.textContent = `${(beatInCycle % ANALYZE_BEATS) + 1}/4`;
       frameId = requestAnimationFrame(tick);
+    }
+
+    function updateBeatDisplay(beatInCycle) {
+      if (beatInCycle === null) {
+        beatReadout.dataset.beat = "none";
+        beatReadout.setAttribute("aria-label", "Beat standby");
+        return;
+      }
+
+      const beat = beatInCycle % CYCLE_BEATS;
+      beatReadout.dataset.beat = String(beat);
+      beatReadout.setAttribute("aria-label", `Beat ${beat + 1} of 4`);
     }
 
     function setPhase(phase) {
@@ -2070,6 +2403,8 @@
     }
 
     function pulseBeat(beatInCycle) {
+      document.body.dataset.beat = String(beatInCycle % CYCLE_BEATS);
+      document.body.dataset.bass = beatInCycle % CYCLE_BEATS === 0 ? "strong" : "normal";
       document.body.dataset.pulse = "1";
       window.setTimeout(() => {
         document.body.dataset.pulse = "0";
@@ -2089,7 +2424,6 @@
       }
       bpmSlider.value = String(bpm);
       bpmVal.textContent = bpm;
-      bpmReadout.textContent = bpm;
     }
 
     function applyScoreBpmBoost() {
@@ -2104,13 +2438,14 @@
     function updateStats() {
       updateCharacterImage();
       scoreReadout.textContent = score.toLocaleString("en-US");
-      bpmReadout.textContent = bpm;
     }
 
     function updateCharacterImage() {
       let nextSrc = CHARACTER_BASE_SRC;
 
-      if (score >= CHARACTER_FINAL_SWAP_SCORE) {
+      if (score >= CHARACTER_SCORE_45000) {
+        nextSrc = CHARACTER_SCORE_45000_SRC;
+      } else if (score >= CHARACTER_FINAL_SWAP_SCORE) {
         nextSrc = CHARACTER_FINAL_SRC;
       } else if (score >= CHARACTER_SWAP_SCORE) {
         nextSrc = CHARACTER_SCORE_SRC;
