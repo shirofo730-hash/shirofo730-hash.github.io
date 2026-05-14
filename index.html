@@ -1072,6 +1072,14 @@
       pointer-events: none;
     }
 
+    .start-stack {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      gap: 18px;
+      justify-items: center;
+    }
+
     .start-button {
       position: relative;
       z-index: 2;
@@ -1112,6 +1120,66 @@
       transform: none;
     }
 
+    .mode-select {
+      position: relative;
+      z-index: 2;
+      width: min(420px, 78vw);
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      pointer-events: auto;
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    .mode-option {
+      min-height: 60px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.07), transparent 34% 72%, rgba(255, 255, 255, 0.035)),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 8px),
+        rgba(7, 7, 8, 0.72);
+      color: rgba(248, 247, 242, 0.74);
+      display: grid;
+      place-items: center;
+      gap: 4px;
+      padding: 9px 10px;
+      text-transform: uppercase;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        inset 0 -12px 20px rgba(0, 0, 0, 0.34);
+      transition: transform 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+    }
+
+    .mode-option span {
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .mode-option small {
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10px;
+      line-height: 1;
+    }
+
+    .mode-option.active,
+    .mode-option:focus-visible {
+      border-color: var(--accent);
+      color: var(--accent);
+      outline: none;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        inset 0 -14px 20px rgba(0, 0, 0, 0.3),
+        0 0 20px var(--accent-soft);
+    }
+
+    .mode-option:hover {
+      transform: translateY(-1px);
+      border-color: rgba(0, 242, 255, 0.48);
+    }
+
     .start-gate.counting .start-button {
       min-width: 0;
       min-height: 0;
@@ -1119,6 +1187,18 @@
       background: transparent;
       box-shadow: none;
       padding: 0;
+    }
+
+    .start-gate.counting .start-stack {
+      gap: 0;
+    }
+
+    .start-gate.counting .mode-select {
+      opacity: 0;
+      transform: translateY(12px);
+      height: 0;
+      overflow: hidden;
+      pointer-events: none;
     }
 
     .start-gate::before,
@@ -1675,9 +1755,21 @@
 <body data-phase="standby" data-evolution="0" data-pulse="0" data-beat="0" data-bass="normal" data-miss-danger="0">
   <button id="settings-btn" type="button" aria-label="Settings" title="Settings">⚙︎</button>
   <div class="start-gate" id="start-gate">
-    <button class="start-button" id="start-btn" type="button" aria-label="Start">
-      <span class="glitch-text" id="start-text" data-text="START">START</span>
-    </button>
+    <div class="start-stack">
+      <button class="start-button" id="start-btn" type="button" aria-label="Start">
+        <span class="glitch-text" id="start-text" data-text="START">START</span>
+      </button>
+      <div class="mode-select" id="mode-select" role="group" aria-label="Mode select">
+        <button class="mode-option active" type="button" data-mode="normal" aria-pressed="true">
+          <span>Normal</span>
+          <small>2:00 / 5,000</small>
+        </button>
+        <button class="mode-option" type="button" data-mode="hard" aria-pressed="false">
+          <span>Hard</span>
+          <small>1:00 / 2,500</small>
+        </button>
+      </div>
+    </div>
   </div>
   <div id="soul-layer" aria-hidden="true"></div>
   <div id="miss-danger-vignette" aria-hidden="true"></div>
@@ -1804,6 +1896,16 @@
     const BPM_MAX = 180;
     const SCORE_BPM_THRESHOLD = 5000;
     const SCORE_BPM_INCREMENT = 10;
+    const GAME_MODES = {
+      normal: {
+        timeLimitMs: TIME_LIMIT_MS,
+        scoreBpmThreshold: SCORE_BPM_THRESHOLD
+      },
+      hard: {
+        timeLimitMs: 60000,
+        scoreBpmThreshold: 2500
+      }
+    };
     const CHARACTER_SWAP_SCORE = 20000;
     const CHARACTER_FINAL_SWAP_SCORE = 30000;
     const CHARACTER_SCORE_45000 = 45000;
@@ -1811,7 +1913,6 @@
     const CHARACTER_SCORE_SRC = "assets/chara1v2.png";
     const CHARACTER_FINAL_SRC = "assets/chara1-score30000.png";
     const CHARACTER_SCORE_45000_SRC = "assets/chara1-score45000.png";
-    const CHARACTER_MISS_SRC = "assets/chara-miss.png";
     const TARGETS = [2, 3, 4, 5];
     const COLORS = [
       { id: "red", value: "#ff4d6d" },
@@ -1833,6 +1934,7 @@
     const startGate = document.getElementById("start-gate");
     const startBtn = document.getElementById("start-btn");
     const startText = document.getElementById("start-text");
+    const modeButtons = Array.from(document.querySelectorAll(".mode-option"));
     const resetBtn = document.getElementById("reset-btn");
     const settingsBtn = document.getElementById("settings-btn");
     const modal = document.getElementById("modal-overlay");
@@ -1865,7 +1967,8 @@
     let resolving = false;
     let startedAt = 0;
     let timeStartedAt = 0;
-    let remainingTimeMs = TIME_LIMIT_MS;
+    let selectedMode = "normal";
+    let remainingTimeMs = currentTimeLimitMs();
     let frameId = 0;
     let lastBeat = -1;
     let lastCycle = -1;
@@ -1883,10 +1986,34 @@
     let resultActive = false;
     let resultTimer = 0;
     let resultFrameId = 0;
-    let missImageTimer = 0;
 
     function randomItem(items) {
       return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function currentModeConfig() {
+      return GAME_MODES[selectedMode] || GAME_MODES.normal;
+    }
+
+    function currentTimeLimitMs() {
+      return currentModeConfig().timeLimitMs;
+    }
+
+    function currentScoreBpmThreshold() {
+      return currentModeConfig().scoreBpmThreshold;
+    }
+
+    function setGameMode(mode) {
+      if (!GAME_MODES[mode] || gameActive || startSequenceActive) return;
+
+      selectedMode = mode;
+      modeButtons.forEach((button) => {
+        const active = button.dataset.mode === mode;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+      });
+      remainingTimeMs = currentTimeLimitMs();
+      updateTimeGauge();
     }
 
     function createGrid() {
@@ -1930,7 +2057,6 @@
       if (count < targetNum) {
         markCluster(cluster, "reject");
         sync = Math.max(0, sync - 6);
-        flashMissCharacter();
         const ended = registerMiss();
         updateStats();
         if (ended) return;
@@ -2089,10 +2215,12 @@
     }
 
     function updateTimeGauge() {
-      const ratio = Math.max(0, Math.min(1, remainingTimeMs / TIME_LIMIT_MS));
+      const timeLimitMs = currentTimeLimitMs();
+      const ratio = Math.max(0, Math.min(1, remainingTimeMs / timeLimitMs));
       const secondsLeft = Math.ceil(remainingTimeMs / 1000);
 
       timeGaugeFill.style.setProperty("--time-left", `${ratio * 100}%`);
+      timeGauge.setAttribute("aria-valuemax", String(Math.ceil(timeLimitMs / 1000)));
       timeGauge.setAttribute("aria-valuenow", String(secondsLeft));
       document.body.dataset.timeLow = ratio <= 0.2 && gameActive ? "1" : "0";
     }
@@ -2339,7 +2467,7 @@
       resolving = false;
       startedAt = performance.now();
       timeStartedAt = startedAt;
-      remainingTimeMs = TIME_LIMIT_MS;
+      remainingTimeMs = currentTimeLimitMs();
       lastBeat = -1;
       lastCycle = -1;
       updateBottomMetronome(0);
@@ -2354,7 +2482,7 @@
       score = 0;
       scoreBpmStep = 0;
       missCount = 0;
-      remainingTimeMs = TIME_LIMIT_MS;
+      remainingTimeMs = currentTimeLimitMs();
       timeStartedAt = 0;
       sync = 0;
       evolution = 0;
@@ -2378,7 +2506,7 @@
       score = 0;
       scoreBpmStep = 0;
       missCount = 0;
-      remainingTimeMs = TIME_LIMIT_MS;
+      remainingTimeMs = currentTimeLimitMs();
       timeStartedAt = 0;
       sync = 0;
       evolution = 0;
@@ -2390,7 +2518,6 @@
       updateBeatDisplay(null);
       updateBottomMetronome(0);
       document.body.dataset.evolution = "0";
-      window.clearTimeout(missImageTimer);
       closeResultOverlay();
       setBpm(BPM_MIN);
       setPhase("standby");
@@ -2415,7 +2542,7 @@
       const cycle = Math.floor(totalBeat / CYCLE_BEATS);
       const phase = beatInCycle < ANALYZE_BEATS ? "analyze" : "execute";
       updateBottomMetronome(beatPosition - totalBeat);
-      remainingTimeMs = Math.max(0, TIME_LIMIT_MS - (now - timeStartedAt));
+      remainingTimeMs = Math.max(0, currentTimeLimitMs() - (now - timeStartedAt));
       updateTimeGauge();
 
       if (remainingTimeMs <= 0) {
@@ -2505,10 +2632,11 @@
       }
       bpmSlider.value = String(bpm);
       bpmVal.textContent = bpm;
+      updateCharacterImage();
     }
 
     function applyScoreBpmBoost() {
-      const earnedStep = Math.floor(score / SCORE_BPM_THRESHOLD);
+      const earnedStep = Math.floor(score / currentScoreBpmThreshold());
 
       while (scoreBpmStep < earnedStep) {
         scoreBpmStep += 1;
@@ -2521,26 +2649,30 @@
       scoreReadout.textContent = score.toLocaleString("en-US");
     }
 
-    function updateCharacterImage() {
-      let nextSrc = CHARACTER_BASE_SRC;
+    function characterSrcForScore(totalScore) {
+      const normalizedScore = Number(totalScore) || 0;
 
-      if (score >= CHARACTER_SCORE_45000) {
-        nextSrc = CHARACTER_SCORE_45000_SRC;
-      } else if (score >= CHARACTER_FINAL_SWAP_SCORE) {
-        nextSrc = CHARACTER_FINAL_SRC;
-      } else if (score >= CHARACTER_SWAP_SCORE) {
-        nextSrc = CHARACTER_SCORE_SRC;
-      }
-
-      if (charImg.getAttribute("src") !== nextSrc) {
-        charImg.src = nextSrc;
-      }
+      if (normalizedScore >= CHARACTER_SCORE_45000) return CHARACTER_SCORE_45000_SRC;
+      if (normalizedScore >= CHARACTER_FINAL_SWAP_SCORE) return CHARACTER_FINAL_SRC;
+      if (normalizedScore >= CHARACTER_SWAP_SCORE) return CHARACTER_SCORE_SRC;
+      return CHARACTER_BASE_SRC;
     }
 
-    function flashMissCharacter() {
-      window.clearTimeout(missImageTimer);
-      charImg.src = CHARACTER_MISS_SRC;
-      missImageTimer = window.setTimeout(updateCharacterImage, 420);
+    function updateCharacterImage() {
+      const nextSrc = characterSrcForScore(score);
+      charImg.src = nextSrc;
+    }
+
+    function preloadCharacterImages() {
+      [
+        CHARACTER_BASE_SRC,
+        CHARACTER_SCORE_SRC,
+        CHARACTER_FINAL_SRC,
+        CHARACTER_SCORE_45000_SRC
+      ].forEach((src) => {
+        const image = new Image();
+        image.src = src;
+      });
     }
 
     function showFeedback(text, type) {
@@ -2863,6 +2995,9 @@
       }
     });
     bpmSlider.addEventListener("input", (event) => setBpm(event.target.value));
+    modeButtons.forEach((button) => {
+      button.addEventListener("click", (event) => setGameMode(event.currentTarget.dataset.mode));
+    });
     startBtn.addEventListener("click", beginStartSequence);
     resultRestart.addEventListener("click", restartFromResult);
     resetBtn.addEventListener("click", () => {
@@ -2870,6 +3005,8 @@
       closeSettingsModal();
     });
 
+    setGameMode(selectedMode);
+    preloadCharacterImages();
     createGrid();
     updateMissGauge();
     updateTimeGauge();
